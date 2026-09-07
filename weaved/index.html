@@ -239,7 +239,6 @@
     color: var(--wild);
     border-color: var(--wild);
     font-size: calc(var(--tile-font, 22px) * 0.8);
-    font-style: italic;
   }
 
   .tile.match-highlight{
@@ -722,7 +721,7 @@
       <li>Drag a letter from your hand into a gap in the board's sequence.</li>
       <li>If your placed letter, together with its board neighbors, spells a word, that stretch of tiles clears.</li>
       <li>Empty the board <em>and</em> your hand to win.</li>
-      <li>The <span class="wild-word">★ wild tile</span> stands in for any letter — but skip it for a <em>perfect solve</em>.</li>
+      <li>The <span class="wild-word">★ wild tile</span> stands in for any letter, but skip it for a <em>perfect solve</em>.</li>
     </ol>
 
     <!-- A small looping demo, built and animated in JS since it's a live
@@ -1063,7 +1062,7 @@
     }
 
     lastMove = null;
-    setMessage("Move undone — tiles restored.", "");
+    setMessage("Tiles restored.", "");
     render();
   }
 
@@ -1089,7 +1088,7 @@
     if(matches.length === 0){
       // return this round's placed tiles to hand
       returnPlacedTilesToHand();
-      setMessage("No word formed — those letters returned to your hand.", "warn");
+      setMessage("No word found, letters returned to hand.", "warn");
       render();
       return;
     }
@@ -1415,13 +1414,13 @@
       captionEl.textContent = "Drag a letter from your hand into the sequence...";
 
       rulesDemoAfter(1500, () => {
-        captionEl.textContent = "Drop \u201COD\u201D between W and R? No — try just \u201CO\u201D.";
+        captionEl.textContent = "Drop \u201CO\u201D between W and R.";
         boardEl.insertBefore(makeDemoTile("O", true), boardEl.children[2]);
         handEl.innerHTML = "";
       });
 
       rulesDemoAfter(2900, () => {
-        captionEl.textContent = "W-O-R-D is a word — that stretch clears.";
+        captionEl.textContent = "W-O-R-D is a word, this clears it from the board.";
         Array.from(boardEl.children).slice(1,5).forEach(t => t.classList.add("match-highlight"));
       });
 
@@ -1436,7 +1435,7 @@
       });
 
       rulesDemoAfter(4900, () => {
-        captionEl.textContent = "R and E are left — clear the board and your hand to win.";
+        captionEl.textContent = "R and E are left, clear the board and your hand to win.";
       });
 
       rulesDemoAfter(6900, play);
