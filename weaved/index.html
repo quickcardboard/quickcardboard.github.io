@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weaved — a word elimination puzzle</title>
+<meta name="description" content="Weaved is a cozy word elimination puzzle. Drag letters into the sequence to spell words and clear the board. Can you land a perfect solve?">
+<meta name="theme-color" content="#f2e9d8">
+
+<!-- Open Graph / social sharing. og:url and og:image are filled in at
+     runtime (see the script near the bottom) since this file doesn't know
+     its own deployed address. For a rich preview image on social platforms,
+     host an actual 1200x630 image at /og-image.png — data URIs are not
+     fetched by link-preview crawlers, so it can't be generated client-side. -->
+<meta property="og:title" content="Weaved — a word elimination puzzle">
+<meta property="og:description" content="Drag letters into the sequence to spell words and clear the board. Can you land a perfect solve?">
+<meta property="og:type" content="website">
+<meta property="og:image" content="og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Weaved — a word elimination puzzle">
+<meta name="twitter:description" content="Drag letters into the sequence to spell words and clear the board. Can you land a perfect solve?">
+<meta name="twitter:image" content="og-image.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Weaved">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Simple inline favicon so the tab has an icon even before the
+     JS-generated app icon (used for install/home-screen) attaches below. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b1e14'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='38' font-weight='bold' fill='%23e2a95b' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<style>
+  /* ---------------------------------------------------------
+     Palette: "Reading Room" (light) / "Study Lamp" (dark).
+     Warmer and more saturated than a flat tan-on-cream — the accent
+     leans toward a burnt-sienna book-spine red, --good is a real forest
+     green, and --wild is a deeper antique gold, so matches and wild
+     tiles read clearly at a glance instead of blending into the paper.
+
+     Two more cozy-library-leaning combinations, if you'd like to try a
+     different mood — just swap the values in above instead of these:
+
+     "Botanical Study" (green-forward, quieter):
+       --paper:#f1ecdf; --paper-2:#e7e0cc; --ink:#26311f; --ink-soft:#5f6b4c;
+       --line:#d3cbab; --tile-bg:#fffef8; --tile-fixed:#e6dfc4;
+       --accent:#4d6b3a; --accent-soft:#d6e2c3; --good:#2f6e63;
+       --good-soft:#d2e6e2; --wild:#b8862b;
+
+     "Ink & Amber" (navy + amber, more dramatic):
+       --paper:#efe9dd; --paper-2:#e2dac7; --ink:#1f2a3d; --ink-soft:#5a6478;
+       --line:#cdc3a8; --tile-bg:#fffdf6; --tile-fixed:#e3dac0;
+       --accent:#c0731f; --accent-soft:#f0d6ac; --good:#5c7a5f;
+       --good-soft:#dbe6dc; --wild:#8a5fb0;
+  --------------------------------------------------------- */
+  :root{
+    --paper: #f2e9d8;
+    --paper-2: #e8dcc3;
+    --ink: #2b1e14;
+    --ink-soft: #7a5f45;
+    --line: #d9c6a3;
+    --tile-bg: #fffaf0;
+    --tile-fixed: #ecdcc0;
+    --accent: #a13d2b;
+    --accent-soft: #f0c9b8;
+    --good: #3f6b44;
+    --good-soft: #d7e6d5;
+    --wild: #b8862b;
+  }
+
+  html[data-theme="dark"]{
+    --paper: #17140f;
+    --paper-2: #211c15;
+    --ink: #f1e6d3;
+    --ink-soft: #b5a488;
+    --line: #3b3225;
+    --tile-bg: #241f17;
+    --tile-fixed: #2d2619;
+    --accent: #e2694f;
+    --accent-soft: #4a2620;
+    --good: #7fb27f;
+    --good-soft: #24331f;
+    --wild: #e8b854;
+  }
+
+  html, body{
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    height:100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow:hidden;
+  }
+
+  body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100%;
+    padding: 6vh 20px 40px;
+  }
+
+  body.dragging{
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  header{
+    width:100%;
+    max-width:480px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 6px;
+  }
+
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  h1{
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight: 400;
+    font-size: 30px;
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: var(--ink);
+    text-align:left;
+  }
+
+  p.sub{ display:none; }
+
+  button, .tile, .hand-label, .message, .modal-box{
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  main{
+    width: 100%;
+    max-width: 480px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 36px;
+    margin-top: 46px;
+  }
+
+  .board-wrap{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  .board{
+    display:flex;
+    align-items:center;
+    flex-wrap: nowrap;
+    justify-content:center;
+    width: 100%;
+    min-width:0;
+    overflow:hidden;
+    padding: 16px 0;
+  }
+
+  .gap{
+    width: var(--gap-w, 6px);
+    height: var(--tile-h, 56px);
+    border-radius: 3px;
+    transition: background .12s ease, width .12s ease, height .12s ease;
+    flex: 0 0 auto;
+  }
+  .gap.hoverable{
+    background: var(--paper-2);
+  }
+  .gap.hover{
+    background: var(--accent-soft);
+  }
+
+  .tile.magnify{
+    z-index: 2;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    border-color: var(--accent);
+  }
+
+  .tile{
+    width: var(--tile-w, 40px);
+    height: var(--tile-h, 56px);
+    background: var(--tile-bg);
+    border: 1px solid var(--line);
+    border-radius: calc(var(--tile-h, 56px) * 0.16);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: var(--tile-font, 22px);
+    font-weight: 600;
+    color: var(--ink);
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
+    touch-action: none;
+    position:relative;
+    flex: 0 0 auto;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    transition: width .12s ease, height .12s ease, font-size .12s ease, box-shadow .12s ease;
+  }
+
+  .tile.fixed{
+    background: var(--tile-fixed);
+    cursor: default;
+  }
+
+  .tile.placed{
+    cursor: grab;
+    border-color: var(--accent);
+  }
+
+  .tile.placed::after{
+    content:"";
+    position:absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .tile.wild{
+    color: var(--wild);
+    border-color: var(--wild);
+    font-size: calc(var(--tile-font, 22px) * 0.8);
+    font-style: italic;
+  }
+
+  .tile.match-highlight{
+    background: var(--good-soft);
+    border-color: var(--good);
+  }
+
+  .hand-section{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 10px;
+  }
+
+  .hand-label{
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.03em;
+  }
+
+  .hand{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content:center;
+    padding: 14px;
+    border-radius: 8px;
+    min-height: 84px;
+    width: 100%;
+    background: var(--paper-2);
+    transition: background .12s ease;
+    overflow:hidden;
+  }
+  .hand.hover{
+    background: var(--accent-soft);
+  }
+
+  .tile.hand-tile{
+    cursor: grab;
+    width: clamp(40px, 11vw, 50px);
+    height: clamp(54px, 15vw, 64px);
+    font-size: clamp(20px, 5.2vw, 26px);
+  }
+  .tile.hand-tile.wild{
+    font-size: clamp(15px, 4vw, 20px);
+  }
+
+  .controls{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+  }
+
+  button{
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    background: var(--tile-bg);
+    color: var(--ink);
+    cursor:pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  button.primary{
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  button.primary:disabled{
+    opacity: .4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled){
+    border-color: var(--accent);
+  }
+
+  .icon-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 12px;
+    color: var(--ink-soft);
+  }
+  .icon-btn:hover:not(:disabled){
+    color: var(--ink);
+  }
+  .icon-btn:disabled{
+    opacity: .35;
+    cursor: not-allowed;
+  }
+
+  .flying-tile{
+    position: fixed;
+    pointer-events: none;
+    z-index: 998;
+    will-change: transform, opacity;
+  }
+
+  .message{
+    min-height: 22px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align:center;
+    max-width: 420px;
+  }
+  .message.warn{ color: var(--wild); }
+  .message.good{ color: var(--good); }
+
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(30,26,20,0.42);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+    z-index: 1000;
+  }
+  .modal-overlay.visible{
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-box{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    width: 100%;
+    max-width: 300px;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  }
+
+  .modal-title{
+    font-size: 15px;
+    font-weight: 600;
+    text-align:center;
+    color: var(--ink);
+  }
+  .modal-title.warn{
+    color: var(--wild);
+  }
+
+  .modal-message{
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align:center;
+    line-height: 1.5;
+  }
+
+  .modal-ok{
+    align-self:center;
+    margin-top: 4px;
+  }
+
+  .choice-btn{
+    width:100%;
+    text-align:left;
+    display:flex;
+    justify-content:space-between;
+    font-size: 15px;
+  }
+  .choice-btn span.word{
+    font-weight:600;
+    letter-spacing: 0.03em;
+  }
+  .choice-btn span.len{
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+
+
+
+  .modal-box.wide{
+    width: 340px;
+    max-width: 88vw;
+    min-height: 340px;
+    justify-content:flex-start;
+    padding: 24px 20px;
+    gap: 14px;
+  }
+
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    min-height:20px;
+  }
+
+  .modal-header .modal-title{
+    flex:1;
+  }
+
+  .modal-title.left{
+    text-align:left;
+    font-size:19px;
+    font-weight:700;
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  }
+
+  .modal-close{
+    position:absolute;
+    right:-8px;
+    top:-8px;
+    width:32px;
+    height:32px;
+    padding:0;
+    border-radius:50%;
+    font-size:22px;
+    line-height:1;
+  }
+
+  .menu-buttons{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .menu-buttons button{
+    width:100%;
+    text-align:left;
+  }
+
+  .menu-daily-btn{
+    width:100%;
+    background: var(--tile-bg);
+    color: var(--ink);
+    font-weight:700;
+    font-size:16px;
+    text-align:center;
+    padding:16px 12px;
+    border-radius:12px;
+    border:1px solid var(--line);
+  }
+
+  .menu-hint{
+    text-align:center;
+    font-size:12.5px;
+    color: var(--ink-soft);
+    margin: -4px 0 0;
+  }
+
+  .menu-pill-row{
+    display:flex;
+    gap:8px;
+  }
+
+  .menu-pill-row .menu-pill {
+    flex:1;
+  }
+
+  .menu-pill{
+    flex:0;
+    min-width:0;
+    text-align:center;
+    padding:13px 4px;
+    border-radius:10px;
+    font-weight:600;
+    font-size:13.5px;
+    background: var(--paper-2);
+    border:1px solid var(--line);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .rules-list{
+    margin: 0 0 18px;
+    padding-left: 20px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .rules-list li{ margin-bottom: 8px; }
+  .rules-list li:last-child{ margin-bottom: 0; }
+  .wild-word{ color: var(--wild); font-style: italic; }
+
+  .rules-demo{
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 10px;
+  }
+  .rules-demo-board, .rules-demo-hand{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 4px;
+    min-height: 46px;
+  }
+  .rules-demo-hand{ min-height: 40px; }
+  .tile.demo-tile{
+    width: 32px;
+    height: 44px;
+    font-size: 18px;
+    transition: transform .45s cubic-bezier(.25,.7,.4,1), opacity .4s ease, background .25s ease, border-color .25s ease;
+  }
+  .rules-demo-caption{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-align:center;
+    min-height: 16px;
+  }
+
+  .rules-text{
+    line-height:1.6;
+    text-align:left;
+  }
+
+  .stats-row{
+    display:flex;
+    justify-content:space-around;
+    gap:12px;
+    margin:4px 0 8px;
+  }
+
+  .stat{
+    text-align:center;
+  }
+  .stat-value{
+    font-size:24px;
+    font-weight:600;
+  }
+  .stat-label{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  .chart{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    margin-top:8px;
+  }
+  .chart-row{
+    display:grid;
+    grid-template-columns:28px 1fr 28px;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+  }
+  .chart-track{
+    height:10px;
+    border-radius:5px;
+    background:var(--paper-2);
+    overflow:hidden;
+  }
+  .chart-bar{
+    height:100%;
+    border-radius:5px;
+    background:var(--accent);
+  }
+
+  .share-text{
+    white-space:pre-line;
+    text-align:center;
+    font-family:inherit;
+  }
+  .win-banner{
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: var(--good);
+    text-align:center;
+  }
+
+  .ghost{
+    position: fixed;
+    pointer-events:none;
+    z-index: 999;
+    opacity: 0.9;
+    transform: translate(-50%,-50%) scale(1.05);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Weaved</h1>
+  <div class="header-actions">
+    <button id="installBtn" class="icon-btn" title="Install Weaved" aria-label="Install Weaved">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/></svg>
+    </button>
+    <button id="rulesBtn" class="icon-btn" title="How to play" aria-label="How to play">Rules</button>
+  </div>
+</header>
+
+<main>
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="hand-section">
+    <div class="hand-label">your hand</div>
+    <div class="hand" id="hand"></div>
+  </div>
+
+  <div class="message" id="message"></div>
+
+  <div class="controls">
+    <button class="primary" id="checkBtn">Check word</button>
+    <button id="undoBtn" class="icon-btn" title="Undo last elimination" aria-label="Undo last elimination" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+    </button>
+    <button id="resetBtn" class="icon-btn" title="Restart this puzzle" aria-label="Restart this puzzle">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 8 8 8"/></svg>
+    </button>
+    <button id="menuBtn" class="icon-btn" title="Menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+  </div>
+</main>
+
+<!--
+  Modals live here as plain HTML. Each one is a ".modal-overlay" that gets a
+  "visible" class added/removed by JS to show/hide it — the markup itself is
+  never generated or rebuilt in JavaScript. Edit the text, buttons, and
+  structure below directly; the JS only fills in the few pieces of data that
+  can't be known ahead of time (stats numbers, the daily/theme button labels,
+  the invalid-play message, the share text, and the list of word choices).
+-->
+
+<div class="modal-overlay" id="invalidOverlay">
+  <div class="modal-box" id="invalidBox">
+    <div class="modal-header">
+      <div class="modal-title warn">Invalid play</div>
+    </div>
+    <div class="modal-message" id="invalidMessage"></div>
+    <button class="primary modal-ok" id="invalidOkBtn">OK</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="matchOverlay">
+  <div class="modal-box" id="matchBox">
+    <div class="modal-header">
+      <div class="modal-title">Which word should clear?</div>
+    </div>
+    <!-- Populated with one .choice-btn per candidate word — the number of
+         choices depends on the current board, so this list has to be built
+         in JS. Everything else on this page does not. -->
+    <div id="matchChoices"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="menuOverlay">
+  <div class="modal-box wide" id="menuBox">
+    <div class="modal-header">
+      <div class="modal-title left">Weaved</div>
+      <button class="modal-close icon-btn" id="menuCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <button class="menu-daily-btn" id="dailyBtn" type="button">Daily Puzzle</button>
+    <div class="menu-hint" id="dailyHint">Or play a random puzzle</div>
+    <button class="menu-pill" id="randomBtn" type="button" style="width:100%;">Random puzzle</button>
+    <div class="menu-pill-row">
+      <button class="menu-pill" id="menuRulesBtn" type="button">Rules</button>
+      <button class="menu-pill" id="menuStatsBtn" type="button">Statistics</button>
+      <button class="menu-pill" id="menuThemeBtn" type="button">Dark mode</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rulesOverlay">
+  <div class="modal-box wide" id="rulesBox">
+    <div class="modal-header">
+      <div class="modal-title">How to play</div>
+      <button class="modal-close icon-btn" id="rulesCloseBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <ol class="rules-list">
+      <li>Drag a letter from your hand into a gap in the board's sequence.</li>
+      <li>If your placed letter, together with its board neighbors, spells a word, that stretch of tiles clears.</li>
+      <li>Empty the board <em>and</em> your hand to win.</li>
+      <li>The <span class="wild-word">★ wild tile</span> stands in for any letter — but skip it for a <em>perfect solve</em>.</li>
+    </ol>
+
+    <!-- A small looping demo, built and animated in JS since it's a live
+         sequence rather than static content — the shell below is the only
+         part that lives in the DOM ahead of time. -->
+    <div class="rules-demo" id="rulesDemo">
+      <div class="rules-demo-board" id="rulesDemoBoard"></div>
+      <div class="rules-demo-hand" id="rulesDemoHand"></div>
+      <div class="rules-demo-caption" id="rulesDemoCaption"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="statsOverlay">
+  <div class="modal-box wide" id="statsBox">
+    <div class="modal-header">
+      <div class="modal-title">Statistics</div>
+      <button class="modal-close icon-btn" id="statsCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="statStreak">0</div>
+        <div class="stat-label">streak</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statPerfect">0</div>
+        <div class="stat-label">perfect solves</div>
+      </div>
+    </div>
+    <!-- Bars are built in JS since the number/height of rows depends on the
+         player's saved stats. -->
+    <div class="chart" id="statsChart"></div>
+    <div class="modal-message" id="statsEmpty" style="display:none;">No solves yet — clear a word to see your stats here.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="shareOverlay">
+  <div class="modal-box wide" id="shareBox">
+    <div class="modal-header">
+      <div class="modal-title">Daily result</div>
+      <button class="modal-close icon-btn" id="shareCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-message share-text" id="shareText"></div>
+    <button class="primary modal-ok" id="shareModalBtn" type="button">Share</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="installOverlay">
+  <div class="modal-box wide" id="installBox">
+    <div class="modal-header">
+      <div class="modal-title">Install Weaved</div>
+      <button class="modal-close icon-btn" id="installCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-message" id="installMessage"></div>
+  </div>
+</div>
+
+
+<script src="check-dictionary.js"></script>
+
+<script>
+(function(){
+
+  /* ---------------------------------------------------------
+     Dictionary
+  --------------------------------------------------------- */
+  const GEN_L3 = "CAT DOG SUN RUN BAT CAR BED CUP HAT MAP NET PEN RAT SIT TOP WIN ARM EAR EYE ICE JAM KEY LEG LID MUD NUT OWL PIG RIB SEA TEA WEB ZOO AGE AIR ANT BAG BOX BUS CAB CAP COW CRY DEN DIG DOT EAT EGG FAN FAT FIG FIN FIT FOX FUN GAP GEM GUM GUN GYM HEN HOG HOP HOT HUG HUT JAR JAW JOB JOG JOY LAP LAW LIP LOG MAT MIX MOB MOM MOP MUG OIL OWE PAD PAN PAT PAY PEA PIN PIT POD POT PUB PUP RAG RAM RIM ROB ROD ROT RUB RUG SAD SAP SAW SIP SIX SKY SLY SOB SOD SON SOW SOY SPA SPY SUM TAB TAG TAN TAP TAX TIE TIN TIP TOE TON TOY TUB TUG VAN VAT VOW WAG WAR WAX WET WIG WIT ZIP".split(" ");
+
+  const GEN_L4 = "ABLE ACID AREA ARMY AUNT BABY BACK BALL BAND BANK BARN BASE BATH BEAM BEAN BEAR BEAT BELL BELT BEND BENT BEST BILL BIRD BITE BLUE BOAT BODY BOIL BOLD BOND BONE BOOK BOOM BOOT BORN BOSS BOTH BOWL BRAG BRIM BUSY CAKE CALF CALL CALM CAMP CARD CARE CART CASE CASH CAST CAVE CELL CHIN CITY CLAP CLAW CLAY CLIP CLUB COAL COAT CODE COIN COLD COOK COOL COPY CORD CORE CORN COST CROP CUBE CURE CURL DAMP DARK DASH DATE DAWN DEAL DEAR DECK DEEP DENY DESK DIAL DICE DIET DIRT DISH DOCK DOOR DOSE DOVE DRAW DROP DRUM DUCK DULL DUMP DUST DUTY EACH EARN EASE EAST EASY EDGE FACE FACT FADE FAIL FAIR FALL FARM FAST FATE FEAR FEED FEEL FEET FELL FELT FILE FILL FILM FIND FINE FIRE FISH FIST FIVE FLAG FLAT FLEE FLEW FLOW FOAM FOLD FOLK FOOD FOOL FOOT FORD FORK FORM FORT FOUR FREE FROG FROM FUEL FULL FUND GAIN GAME GATE GAVE GEAR GENE GIFT GIRL GIVE GLAD GLOW GOAL GOAT GOLD GOLF GONE GOOD GRAY GREW GREY GRID GRIN GROW GULF HAIR HALF HALL HAND HANG HARD HARM HATE HAVE HAWK HEAD HEAL HEAP HEAR HEAT HELD HELP HERB HERD HERE HERO HIDE HIGH HILL HINT HIRE HOLD HOLE HOLY HOME HOOK HOPE HORN HOSE HOST HOUR HUGE HUNT HURT ICON IDEA INCH IRON ITEM JAZZ JOIN JOKE JUMP JUNE JURY JUST KEEN KEEP KICK KIND KING KISS KNEE KNOT KNOW LACE LACK LADY LAID LAKE LAMB LAMP LAND LANE LAST LATE LEAD LEAF LEAN LEAP LEFT LEND LESS LIED LIFE LIFT LIKE LIME LIMB LINE LINK LION LIST LIVE LOAD LOAF LOAN LOCK LOFT LOGO LONE LONG LOOK LOOP LORD LOSE LOSS LOST LOUD LOVE LUCK LUMP LUNG MADE MAIL MAIN MAKE MALE MANY MARK MASK MASS MATH MEAL MEAN MEAT MEET MELT MEND MENU MERE MESH MESS MICE MILD MILE MILK MIND MINE MINT MISS MIST MODE MOOD MOON MORE MOSS MOST MOVE MUCH MULE MUST MYTH NAIL NAME NAVY NEAR NEAT NECK NEED NERD NEST NEWS NEXT NICE NINE NOON NORM NOSE NOTE NOUN OATH OKAY ONLY OPEN ORAL OVEN OVER PACE PACK PAGE PAID PAIN PAIR PALE PALM PANE PARK PART PASS PAST PATH PEAK PEAR PEEL PEER PICK PIER PILE PILL PINE PINK PINT PIPE PLAN PLAY PLEA PLOT PLOW PLUG PLUM PLUS POEM POET POLE POLL POND POOL POOR PORT POSE POST POUR PRAY PREP PROP PULL PUMP PURE PUSH QUIT QUIZ RACE RACK RAGE RAID RAIL RAIN RANK RARE RATE READ REAL REAP REED REEF RELY RENT REST RICE RICH RIDE RING RISE RISK ROAD ROAR ROBE ROCK ROLE ROLL ROOF ROOM ROOT ROPE ROSE ROSY SALE SALT SAME SAND SAVE SEAL SEAT SEED SEEK SEEM SEEN SELF SELL SEND SENT SHIP SHOE SHOP SHOT SHOW SHUT SICK SIDE SIGN SILK SING SINK SITE SIZE SKIN SKIP SLAP SLED SLIM SLIP SLOW SNAP SNOW SOAP SOFT SOIL SOLD SOLE SOME SONG SOON SORT SOUL SOUP SOUR SPIN SPOT STAR STAY STEM STEP STIR STOP SUCH SUIT SUNK SURE SWAM SWIM TAIL TAKE TALE TALK TALL TANK TAPE TASK TEAM TEAR TELL TEND TENT TERM TEST TEXT THAN THAT THEM THEN THEY THIN THIS THUS TICK TIDE TIME TINY TIRE TOAD TOLD TOLL TONE TOOK TOOL TORN TOSS TOUR TOWN TRAP TREE TRIM TRIP TRUE TUBE TUNE TURN TWIN TYPE UGLY UNIT UPON USED USER VAIN VAST VERY VIEW VOTE WAGE WAIT WAKE WALK WALL WANT WARD WARM WARN WASH WAVE WEAK WEAR WEEK WELL WENT WERE WEST WHAT WHEN WIDE WIFE WILD WILL WIND WINE WING WIPE WIRE WISE WISH WITH WOLF WOOD WOOL WORD WORE WORK WORM WORN WRAP YARD YEAR YOUR ZERO ZONE".split(" ");
+
+  const GEN_L5 = "APPLE BEACH BRAIN BREAD BRICK BRING BROWN BRUSH BUILD CANDY CHAIR CHALK CHART CHESS CHILD CHINA CLASS CLEAN CLICK CLIMB CLOCK CLOSE CLOUD COACH COAST CRAFT CRASH CRAZY CREAM CROWD CROWN DANCE DEPTH DOUBT DRAFT DRAIN DRAMA DRESS DRINK DRIVE EARTH EQUAL EVENT FAITH FIELD FIGHT FINAL FIRST FLAME FLASH FLOOR FLOUR FOCUS FORCE FRAME FRESH FRONT FROST FRUIT GHOST GLASS GLOBE GLOVE GRACE GRAND GRAPE GRASS GREEN GRIEF GROUP GROWN GUARD GUESS GUEST HAPPY HEART HEAVY HORSE HOUSE HUMAN IMAGE INDEX JUICE KNIFE KNOCK LAUGH LEARN LEMON LEVEL LIGHT LIMIT LOGIC LOOSE LUCKY LUNCH MAGIC MAJOR MARCH MATCH MAYBE MEDAL MERGE METAL MIGHT MINOR MODEL MONEY MONTH MOUSE MOUTH MUSIC NIGHT NOISE NORTH NOVEL NURSE OCEAN OFFER OTHER OUGHT PAINT PANEL PAPER PARTY PEACE PHASE PHONE PHOTO PIANO PILOT PLACE PLAIN PLANE PLANT PLATE POINT POUND POWER PRESS PRICE PRIDE PRINT PRIOR PRIZE PROOF PROUD PROVE QUEEN QUICK QUIET QUITE RADIO RAINY RANGE REACH READY REFER RIGHT RIVER ROBOT ROUND ROUTE ROYAL RURAL SAUCE SCALE SCENE SCOPE SCORE SENSE SERVE SEVEN SHADE SHAKE SHALL SHAPE SHARE SHARP SHEEP SHEET SHELF SHELL SHIFT SHINE SHIRT SHOCK SHOOT SHORE SHORT SIGHT SINCE SKILL SLEEP SLICE SLIDE SMALL SMART SMILE SMOKE SNAKE SOLID SOUND SOUTH SPACE SPARE SPEAK SPEED SPELL SPEND SPICE SPLIT SPORT STAGE STAIR STAMP STAND START STATE STEAM STEEL STICK STILL STOCK STONE STORE STORM STORY STOVE STUDY STUFF STYLE SUGAR SUPER SWEET SWIFT SWING TABLE TASTE TEACH THANK THEME THICK THING THINK THIRD THREE THROW TIGER TIGHT TIRED TITLE TODAY TOOTH TOPIC TOTAL TOUCH TOUGH TOWEL TOWER TRACK TRADE TRAIN TREAT TREND TRIAL TRUCK TRULY TRUST TRUTH UNCLE UNDER UNITY UPPER URBAN USUAL VALUE VIDEO VISIT VOICE WASTE WATCH WATER WHEAT WHEEL WHERE WHICH WHILE WHITE WHOLE WOMAN WORLD WORRY WORSE WORST WORTH WOULD WRIST WRITE YOUTH".split(" ");
+
+  const GEN_L6 = "ANIMAL ANSWER ASSIST BEFORE BORDER BOTTLE BOUGHT BRIDGE BROKEN BUDGET CAMERA CANCEL CARBON CASTLE CHOICE CHOOSE CHURCH CIRCLE CLOSED COFFEE COMBAT COMING COOKIE COPPER CORNER COUPLE COURSE COUSIN CREATE CREDIT CUSTOM DAMAGE DANGER DECIDE DEGREE DEMAND DESERT DESIGN DETAIL DEVICE DINNER DOCTOR DOMAIN DOUBLE DRIVER DURING EASILY EDITOR EFFORT EITHER ELEVEN ENABLE ENERGY ENGINE ENOUGH ENTIRE ESCAPE ETHNIC EXCEPT EXCUSE EXPAND EXPECT EXPERT EXTEND FABRIC FACTOR FAMOUS FARMER FATHER FELLOW FEMALE FIGURE FINGER FINISH FLIGHT FLYING FOLLOW FORCED FOREST FORGET FORMAT FORMER FOSTER FRIEND GARDEN GATHER GENDER GENTLE GLOBAL GOLDEN GROUND GROWTH HANDLE HAPPEN HARDLY HEALTH HEAVEN HIDDEN HORROR IMPACT IMPORT INCOME INDEED INJURY INSIDE INSECT INTENT ISLAND ITSELF JUNIOR KEEPER KETTLE KIDNEY KNIGHT LADDER LAWYER LEADER LEAGUE LEGACY LENGTH LESSON LETTER LISTEN LITTLE LIVING LOCKED LONELY MAGNET MAKEUP MANNER MARBLE MARGIN MARKET MASTER MATTER MEDIUM MEMORY MENTAL METHOD MIDDLE MINUTE MIRROR MOBILE MODERN MODULE MOMENT MONKEY MOTHER MOTION MOTIVE MOVING MURDER MUSEUM MUTUAL MYSELF NATION NATIVE NATURE NEARBY NEEDED NEPHEW NOBODY NORMAL NOTICE NUMBER OBJECT OBTAIN OFFICE ONLINE ORANGE ORIGIN OUTPUT OXYGEN PARENT PARTLY PENCIL PEOPLE PERIOD PERMIT PERSON PHRASE PICNIC PLANET PLENTY POCKET POETRY POLICE POLICY PRAYER PRETTY PROFIT PROPER PROVEN PUBLIC PUPPET PURPLE PUZZLE RABBIT RANDOM RATHER RECALL RECENT RECORD REDUCE REFORM REGARD REGION RELATE REMAIN REMOTE REPAIR REPEAT REPORT RESCUE RESULT RETURN REVEAL REVIEW REWARD RIBBON RISING ROCKET ROTATE RUBBER RUNWAY SAFETY SALARY SAMPLE SAVING SCHEME SCHOOL SCREEN SEARCH SEASON SECOND SECRET SECTOR SELECT SENIOR SERIES SETTLE SHADOW SHOWED SILVER SIMPLE SINGER SISTER SLIGHT SOCCER SOCIAL SODIUM SOURCE SPEECH SPIRIT SPREAD SPRING SQUARE STABLE STATUS STOLEN STREAM STREET STRESS STRICT STRIKE STRING STRONG STUDIO SUBMIT SUDDEN SUFFER SUMMER SUNSET SUPPLY SURELY SURVEY SWITCH SYMBOL SYSTEM TACKLE TARGET TEMPLE TENANT THEORY THREAT THROAT TICKET TIMBER TISSUE TOWARD TRAVEL TRIBAL TROPHY TUNNEL TWELVE UNIQUE UNLESS UNLOCK UPDATE UPLOAD UPWARD URGENT USEFUL VACUUM VALLEY VENDOR VERBAL VERSUS VICTIM VIEWER VOYAGE WALLET WEALTH WEEKLY WIDOW WINDOW WINTER WISDOM WONDER WORKER YELLOW".split(" ");
+
+  const wordsByLength = {3:GEN_L3, 4:GEN_L4, 5:GEN_L5, 6:GEN_L6};
+  // Include the compact puzzle-generation lists in validation as well.
+  for(const word of [...GEN_L3, ...GEN_L4, ...GEN_L5, ...GEN_L6]){
+    checkDictionary.add(word);
+  }
+
+
+
+
+
+
+
+
+
+  /* ---------------------------------------------------------
+     State
+  --------------------------------------------------------- */
+  let board = [];   // array of tile objects, in order
+  let hand = [];    // array of tile objects
+  let placedIds = new Set(); // ids of tiles on board placed this round
+  let nextId = 1;
+  let pendingMatches = null; // when multiple matches, list awaiting choice
+  let errorMessage = null;   // text for the invalid-play modal
+  let modalState = null;     // {type, closable} for whichever modal overlay is open
+  let won = false;
+  let puzzleMode = "random";
+  let puzzleDate = null;
+  let moveCount = 0;
+  let eliminatedWords = [];
+  let initialBoardSnapshot = [];
+  let initialHandSnapshot = [];
+  let lastMove = null; // snapshot of everything needed to undo the most recent elimination
+  let deferredInstallPrompt = null;
+  const STATS_KEY = "weavedStatsV2";
+  const DAILY_KEY = "weavedDailyV2";
+
+  function makeTile(letter, isWild){
+    return { id: nextId++, letter: letter, isWild: !!isWild };
+  }
+
+  function shuffle(arr, rng=Math.random){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(rng()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function seededRandom(seed){
+    let s = seed >>> 0;
+    return function(){
+      s += 0x6D2B79F5;
+      let t = s;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function dateSeed(dateString){
+    let h = 2166136261;
+    for(const ch of dateString){
+      h ^= ch.charCodeAt(0);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function localDateKey(){
+    const d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+
+  function generatePuzzle(mode="random", dateString=null){
+    const rng = mode === "daily" ? seededRandom(dateSeed(dateString || localDateKey())) : Math.random;
+    const patterns = [[6,6],[6,3,3],[5,4,3],[4,4,4],[3,3,3,3],[5,3,4],[3,4,5]];
+    let target = null;
+
+    while(!target){
+      const pattern = shuffle(patterns, rng)[0];
+      const chosenWords = pattern.map(len => {
+        const list = wordsByLength[len];
+        return list[Math.floor(rng()*list.length)];
+      });
+      const ordered = shuffle(chosenWords, rng);
+      const letters = ordered.join("").split("");
+      if(letters.length === 12) target = letters;
+    }
+
+    const indices = shuffle([...Array(12).keys()], rng);
+    const boardIdx = indices.slice(0,6).sort((a,b)=>a-b);
+    const handIdx = indices.slice(6);
+
+    board = boardIdx.map(i => makeTile(target[i], false));
+    hand = shuffle(handIdx.map(i => makeTile(target[i], false)), rng);
+    hand.push(makeTile("★", true));
+
+    initialBoardSnapshot = board.map(t => ({...t}));
+    initialHandSnapshot = hand.map(t => ({...t}));
+
+    puzzleMode = mode;
+    puzzleDate = mode === "daily" ? (dateString || localDateKey()) : null;
+    moveCount = 0;
+    eliminatedWords = [];
+    placedIds = new Set();
+    pendingMatches = null;
+    errorMessage = null;
+    won = false;
+    lastMove = null;
+    setMessage("");
+    saveDailyState();
+    render();
+  }
+
+  function restartPuzzle(){
+    if(!initialBoardSnapshot.length && !initialHandSnapshot.length) return;
+    board = initialBoardSnapshot.map(t => ({...t}));
+    hand = initialHandSnapshot.map(t => ({...t}));
+    placedIds = new Set();
+    pendingMatches = null;
+    errorMessage = null;
+    won = false;
+    moveCount = 0;
+    eliminatedWords = [];
+    lastMove = null;
+    setMessage("");
+    saveDailyState();
+    render();
+  }
+
+  /* ---------------------------------------------------------
+     Word matching
+  --------------------------------------------------------- */
+  function candidateWordsForSlice(slice){
+    const wildIdx = slice.findIndex(t => t.isWild);
+    if(wildIdx === -1){
+      const word = slice.map(t=>t.letter).join("");
+      return checkDictionary.has(word) ? [word] : [];
+    }
+    const found = [];
+    for(let code=65; code<=90; code++){
+      const letter = String.fromCharCode(code);
+      const word = slice.map((t,i)=> i===wildIdx ? letter : t.letter).join("");
+      if(checkDictionary.has(word)) found.push(word);
+    }
+    return found;
+  }
+
+  function computeMatches(){
+    const n = board.length;
+    const matches = [];
+    const seen = new Set();
+
+    // A valid elimination must bridge the two sources of tiles:
+    // at least one tile placed from the hand this round AND at least one
+    // tile that was already on the board before this round.
+    for(let len = Math.min(n,10); len >= 3; len--){
+      for(let start = 0; start + len <= n; start++){
+        const slice = board.slice(start, start+len);
+        const includesHandTile = slice.some(t => placedIds.has(t.id));
+        const includesBoardTile = slice.some(t => !placedIds.has(t.id));
+        const includesAllPlaced = [...placedIds].every(id => slice.some(t => t.id === id));
+        if(!includesHandTile || !includesBoardTile || !includesAllPlaced) continue;
+
+        const words = candidateWordsForSlice(slice);
+        for(const word of words){
+          const key = start+"-"+(start+len-1)+"-"+word;
+          if(seen.has(key)) continue;
+          seen.add(key);
+          matches.push({start, end: start+len-1, length: len, word});
+        }
+      }
+    }
+    matches.sort((a,b)=> b.length - a.length || a.start - b.start);
+    return matches;
+  }
+
+  // Collapses matches that would eliminate the exact same tiles (same start/end span) into a
+  // single entry. This means a wildcard that could stand for several letters, but doesn't change
+  // which tiles get removed, never produces a "choose which word" situation.
+  function dedupeMatchesBySpan(matches){
+    const seenSpans = new Set();
+    const result = [];
+
+    for(const m of matches){
+      // If a wildcard can make several valid words over the exact same
+      // tiles, the player's choice cannot change which tiles are removed.
+      // Keep one representative so no unnecessary modal is shown.
+      const key = m.start + "-" + m.end;
+      if(seenSpans.has(key)) continue;
+      seenSpans.add(key);
+      result.push(m);
+    }
+
+    return result;
+  }
+
+  function returnPlacedTilesToHand(){
+    lastMove = null;
+    const returning = board.filter(t => placedIds.has(t.id));
+    board = board.filter(t => !placedIds.has(t.id));
+    hand = hand.concat(returning);
+    placedIds = new Set();
+  }
+
+  // Captures everything undoLastMove() needs to fully reverse the elimination
+  // about to happen — including the raw stats/daily-state objects as they
+  // stood immediately beforehand, so a win can be un-recorded exactly, not
+  // just approximately (decrementing counters could drift; restoring the
+  // whole prior object can't).
+  function snapshotForUndo(){
+    return {
+      board: board.map(t => ({...t})),
+      hand: hand.map(t => ({...t})),
+      placedIds: new Set(placedIds),
+      moveCount,
+      eliminatedWords: eliminatedWords.slice(),
+      won,
+      statsBefore: loadStats(),
+      dailyStateBefore: loadDailyState()
+    };
+  }
+
+  function eliminateMatch(match){
+    lastMove = snapshotForUndo();
+
+    const boardEl = document.getElementById("board");
+    const tileEls = Array.from(boardEl.querySelectorAll(".tile")).slice(match.start, match.start + match.length);
+    flyTilesOffScreen(tileEls);
+
+    board.splice(match.start, match.length);
+    placedIds = new Set();
+    pendingMatches = null;
+    moveCount++;
+    eliminatedWords.push(match.word);
+    checkWin();
+    render();
+  }
+
+  // Reverses the single most recent elimination: the board and hand go back
+  // to exactly how they looked right before that word cleared (including any
+  // tile you'd placed from your hand, still sitting on the board where you
+  // left it — drag or click it back to your hand if you want to try
+  // something else). If that elimination was the winning move, the streak,
+  // perfect-solve count, and word-length stats it recorded are un-recorded
+  // too, and the "Share result" text goes back to matching what's on screen.
+  function undoLastMove(){
+    if(!lastMove || pendingMatches || errorMessage) return;
+    const m = lastMove;
+    const wasWon = won;
+
+    board = m.board;
+    hand = m.hand;
+    placedIds = m.placedIds;
+    moveCount = m.moveCount;
+    eliminatedWords = m.eliminatedWords;
+    won = m.won;
+
+    if(wasWon && !won){
+      saveStats(m.statsBefore);
+      if(m.dailyStateBefore) localStorage.setItem(DAILY_KEY, JSON.stringify(m.dailyStateBefore));
+      else localStorage.removeItem(DAILY_KEY);
+    }
+
+    lastMove = null;
+    setMessage("Move undone — tiles restored.", "");
+    render();
+  }
+
+  function attemptEliminate(match){
+    const resultingBoardLength = board.length - match.length;
+    const handHasLetters = hand.some(t => !t.isWild);
+
+    if(resultingBoardLength === 0 && handHasLetters){
+      returnPlacedTilesToHand();
+      pendingMatches = null;
+      errorMessage = "Letters remain in the hand, invalid play.";
+      render();
+      return;
+    }
+
+    setMessage("\u201C" + match.word + "\u201D cleared from the board.", "good");
+    eliminateMatch(match);
+  }
+
+  function checkWord(){
+    if(pendingMatches || errorMessage) return;
+    const matches = dedupeMatchesBySpan(computeMatches());
+    if(matches.length === 0){
+      // return this round's placed tiles to hand
+      returnPlacedTilesToHand();
+      setMessage("No word formed — those letters returned to your hand.", "warn");
+      render();
+      return;
+    }
+    if(matches.length === 1){
+      attemptEliminate(matches[0]);
+      return;
+    }
+    pendingMatches = matches;
+    setMessage("");
+    render();
+  }
+
+  function checkWin(){
+    const handRemaining = hand.filter(t => !t.isWild).length;
+    if(board.length === 0 && handRemaining === 0){
+      won = true;
+      if(puzzleMode === "daily") recordDailyWin();
+      recordStatsWin();
+      setMessage("");
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Messaging
+  --------------------------------------------------------- */
+  function setMessage(text, kind){
+    const el = document.getElementById("message");
+    el.textContent = text;
+    el.className = "message" + (kind ? " " + kind : "");
+  }
+
+  /* ---------------------------------------------------------
+     Rendering
+  --------------------------------------------------------- */
+  function computeTileSize(){
+    const wrap = document.querySelector(".board-wrap");
+    const available = Math.max(200, (wrap ? wrap.clientWidth : window.innerWidth) - 12);
+    const n = Math.max(board.length, 1);
+    const ratio = 0.72;      // width : height, like a playing card
+    const minH = 30, maxH = 64;
+
+    const staticGap = 2;
+
+    let chosenH = minH;
+    for(let h = maxH; h >= minH; h--){
+      const total = n * h * ratio + (n + 1) * staticGap;
+      if(total <= available){ chosenH = h; break; }
+    }
+
+    const h = chosenH;
+    const w = h * ratio;
+    const gap = staticGap;
+    const font = Math.max(13, h * 0.4);
+
+    const root = document.documentElement.style;
+    root.setProperty("--tile-w", w.toFixed(1) + "px");
+    root.setProperty("--tile-h", h.toFixed(1) + "px");
+    root.setProperty("--gap-w", gap.toFixed(1) + "px");
+    root.setProperty("--tile-font", font.toFixed(1) + "px");
+  }
+
+  window.addEventListener("resize", () => {
+    computeTileSize();
+    renderBoard();
+    renderHand();
+  });
+
+  function render(){
+    computeTileSize();
+    renderBoard();
+    renderHand();
+    updateModal();
+    const checkBtn = document.getElementById("checkBtn");
+    checkBtn.disabled = !!pendingMatches || !!errorMessage;
+    checkBtn.textContent = (won && puzzleMode === "daily") ? "Share result" : "Check word";
+    checkBtn.onclick = (won && puzzleMode === "daily") ? (e)=>shareDailyResult(e.currentTarget) : checkWord;
+
+    document.getElementById("undoBtn").disabled = !lastMove || !!pendingMatches || !!errorMessage;
+
+    const main = document.querySelector("main");
+    let banner = document.getElementById("winBanner");
+    if(won){
+      if(!banner){
+        banner = document.createElement("div");
+        banner.id = "winBanner";
+        banner.className = "win-banner";
+        main.insertBefore(banner, main.firstChild);
+      }
+      const usedWild = initialHandSnapshot.some(t=>t.isWild) && !hand.some(t=>t.isWild);
+      banner.textContent = usedWild ? "Board cleared. You solved it." : "Perfect clear!";
+    } else if(banner){
+      banner.remove();
+    }
+  }
+
+  // Clones the DOM elements of just-eliminated tiles and drops them off the
+  // bottom of the board — matching the "tiles fall off the board" moment in
+  // the rules demo, just scaled up to fall off the bottom of the screen —
+  // while the "real" board underneath re-renders instantly with the tiles
+  // already gone. Purely visual: state is never read back from these clones,
+  // so a slow device just sees a shorter flourish, never a stall.
+  function flyTilesOffScreen(tileEls){
+    if(!tileEls.length) return;
+    const vh = window.innerHeight;
+
+    tileEls.forEach((el, i) => {
+      const rect = el.getBoundingClientRect();
+      const clone = el.cloneNode(true);
+      clone.classList.add("flying-tile", "match-highlight");
+      clone.style.left = rect.left + "px";
+      clone.style.top = rect.top + "px";
+      clone.style.width = rect.width + "px";
+      clone.style.height = rect.height + "px";
+      clone.style.margin = "0";
+      document.body.appendChild(clone);
+
+      const dir = (i % 2 === 0) ? -1 : 1;
+      const dy = (vh - rect.top) + 80 + Math.random() * 60; // fall well past the bottom edge
+      const dx = dir * (12 + Math.random() * 28);           // gentle sideways tumble
+      const rot = dir * (60 + Math.random() * 120);
+      const delay = i * 55;
+
+      requestAnimationFrame(() => {
+        clone.style.transition = "transform 560ms cubic-bezier(.4,.1,.6,1) " + delay + "ms, opacity 480ms ease " + (delay + 220) + "ms";
+        clone.style.transform = "translate(" + dx.toFixed(0) + "px, " + dy.toFixed(0) + "px) rotate(" + rot.toFixed(0) + "deg)";
+        clone.style.opacity = "0";
+      });
+
+      setTimeout(() => clone.remove(), 820 + delay);
+    });
+  }
+
+  function tileEl(tile, extraClass){
+    const el = document.createElement("div");
+    el.className = "tile " + extraClass + (tile.isWild ? " wild" : "");
+    el.textContent = tile.letter;
+    el.dataset.id = tile.id;
+    return el;
+  }
+
+  function renderBoard(){
+    const container = document.getElementById("board");
+    container.innerHTML = "";
+
+    const highlightRange = pendingMatches ? null : null;
+
+    for(let i=0; i<=board.length; i++){
+      const gap = document.createElement("div");
+      gap.className = "gap hoverable";
+      gap.dataset.index = i;
+      container.appendChild(gap);
+
+      if(i < board.length){
+        const tile = board[i];
+        const placed = placedIds.has(tile.id);
+        const el = tileEl(tile, "fixed" + (placed ? " placed" : ""));
+        if(placed){
+          el.addEventListener("click", () => {
+            if(pendingMatches || errorMessage) return;
+            const idx = board.findIndex(t=>t.id===tile.id);
+            if(idx === -1) return;
+            const [t] = board.splice(idx,1);
+            hand.push(t);
+            placedIds.delete(t.id);
+            lastMove = null;
+            setMessage("");
+            render();
+          });
+          attachDrag(el, tile, "board");
+        }
+        container.appendChild(el);
+      }
+    }
+  }
+
+  function renderHand(){
+    const container = document.getElementById("hand");
+    container.innerHTML = "";
+    for(const tile of hand){
+      const el = tileEl(tile, "hand-tile");
+      attachDrag(el, tile, "hand");
+      container.appendChild(el);
+    }
+  }
+
+  // Every modal is static HTML sitting in the document (see the overlays
+  // right after <main>). showModal()/closeModal() just decide *which* one is
+  // visible; updateModal() below only ever fills in text on elements that
+  // already exist — it never builds modal markup.
+  function showModal(type, options={}){
+    modalState = {type, closable: options.closable !== false};
+    updateModal();
+  }
+
+  function closeModal(){
+    modalState = null;
+    pendingMatches = null;
+    updateModal();
+  }
+
+  const MODAL_OVERLAY_IDS = ["invalidOverlay","matchOverlay","menuOverlay","rulesOverlay","statsOverlay","shareOverlay","installOverlay"];
+
+  function hideAllModals(){
+    for(const id of MODAL_OVERLAY_IDS){
+      document.getElementById(id).classList.remove("visible");
+    }
+  }
+
+  function setCloseButtonVisible(overlay, visible){
+    const btn = overlay.querySelector(".modal-close");
+    if(btn) btn.style.display = visible ? "" : "none";
+  }
+
+  function updateModal(){
+    stopDailyCountdown();
+    stopRulesDemo();
+    hideAllModals();
+
+    if(errorMessage){
+      document.getElementById("invalidMessage").textContent = errorMessage;
+      document.getElementById("invalidOverlay").classList.add("visible");
+      return;
+    }
+
+    if(pendingMatches){
+      const choices = document.getElementById("matchChoices");
+      choices.innerHTML = "";
+      for(const m of pendingMatches){
+        const btn=document.createElement("button"); btn.className="choice-btn";
+        const w=document.createElement("span"); w.className="word"; w.textContent=m.word;
+        const l=document.createElement("span"); l.className="len"; l.textContent=m.length+" letters";
+        btn.append(w,l); btn.addEventListener("click",()=>attemptEliminate(m));
+        choices.appendChild(btn);
+      }
+      document.getElementById("matchOverlay").classList.add("visible");
+      return;
+    }
+
+    if(!modalState) return;
+
+    const overlay = document.getElementById(modalState.type+"Overlay");
+    if(!overlay) return;
+
+    if(modalState.type==="menu"){
+      const dailyDone = isDailySolved();
+      document.getElementById("dailyBtn").textContent = dailyDone ? "Share daily result" : "Daily Puzzle";
+      document.getElementById("dailyHint").textContent = dailyDone
+        ? (timeUntilNextDaily()+" until the next daily, while you wait...")
+        : "Or play a random puzzle";
+      document.getElementById("menuThemeBtn").textContent = getTheme()==="dark" ? "Light mode" : "Dark mode";
+      if(dailyDone) startDailyCountdown();
+    } else if(modalState.type==="stats"){
+      const stats=loadStats();
+      document.getElementById("statStreak").textContent = stats.streak;
+      document.getElementById("statPerfect").textContent = stats.perfect;
+      const usedLengths=[];
+      for(let len=3;len<=10;len++){ if(stats.lengths[len]>0) usedLengths.push(len); }
+      const chart = document.getElementById("statsChart");
+      const emptyMsg = document.getElementById("statsEmpty");
+      chart.innerHTML = "";
+      if(usedLengths.length){
+        chart.style.display = "";
+        emptyMsg.style.display = "none";
+        const max=Math.max(1,...usedLengths.map(l=>stats.lengths[l]));
+        for(const len of usedLengths){
+          const r=document.createElement("div"); r.className="chart-row";
+          const lab=document.createElement("span"); lab.textContent=len;
+          const track=document.createElement("div"); track.className="chart-track";
+          const bar=document.createElement("div"); bar.className="chart-bar"; bar.style.width=(stats.lengths[len]/max*100)+"%";
+          track.appendChild(bar);
+          const count=document.createElement("span"); count.textContent=stats.lengths[len]||0;
+          r.append(lab,track,count); chart.appendChild(r);
+        }
+      } else {
+        chart.style.display = "none";
+        emptyMsg.style.display = "";
+      }
+    } else if(modalState.type==="share"){
+      document.getElementById("shareText").textContent = buildShareText();
+    } else if(modalState.type==="install"){
+      document.getElementById("installMessage").textContent = installHelpText;
+    } else if(modalState.type==="rules"){
+      runRulesDemo();
+    }
+
+    setCloseButtonVisible(overlay, modalState.closable);
+    overlay.classList.add("visible");
+  }
+
+  /* ---------------------------------------------------------
+     Rules-modal demo: a small looping animation showing a tile dragged
+     into the sequence and the resulting word falling off the board.
+     Sequence used: R W R D E -> drop "O" between W and R -> W O R D
+     clears, leaving R E. Built in JS since it's an animated sequence,
+     not static content — see the shell in the rules modal's HTML.
+  --------------------------------------------------------- */
+  let rulesDemoTimers = [];
+  function stopRulesDemo(){
+    rulesDemoTimers.forEach(id => clearTimeout(id));
+    rulesDemoTimers = [];
+  }
+  function rulesDemoAfter(ms, fn){
+    rulesDemoTimers.push(setTimeout(fn, ms));
+  }
+  function makeDemoTile(letter, fixed){
+    const el = document.createElement("div");
+    el.className = "tile demo-tile" + (fixed ? " fixed" : "");
+    el.textContent = letter;
+    return el;
+  }
+  function runRulesDemo(){
+    stopRulesDemo();
+    const boardEl = document.getElementById("rulesDemoBoard");
+    const handEl = document.getElementById("rulesDemoHand");
+    const captionEl = document.getElementById("rulesDemoCaption");
+    if(!boardEl) return;
+    const letters = ["R","W","R","D","E"];
+
+    function play(){
+      boardEl.innerHTML = ""; handEl.innerHTML = "";
+      letters.forEach(l => boardEl.appendChild(makeDemoTile(l, true)));
+      handEl.appendChild(makeDemoTile("O", false));
+      captionEl.textContent = "Drag a letter from your hand into the sequence...";
+
+      rulesDemoAfter(1500, () => {
+        captionEl.textContent = "Drop \u201COD\u201D between W and R? No — try just \u201CO\u201D.";
+        boardEl.insertBefore(makeDemoTile("O", true), boardEl.children[2]);
+        handEl.innerHTML = "";
+      });
+
+      rulesDemoAfter(2900, () => {
+        captionEl.textContent = "W-O-R-D is a word — that stretch clears.";
+        Array.from(boardEl.children).slice(1,5).forEach(t => t.classList.add("match-highlight"));
+      });
+
+      rulesDemoAfter(3900, () => {
+        const clearing = Array.from(boardEl.children).slice(1,5);
+        clearing.forEach((t,i) => {
+          t.style.transitionDelay = (i*60) + "ms";
+          t.style.transform = "translateY(70px) rotate(" + ((i%2===0?-1:1)*35) + "deg)";
+          t.style.opacity = "0";
+        });
+        rulesDemoAfter(650, () => clearing.forEach(t => t.remove()));
+      });
+
+      rulesDemoAfter(4900, () => {
+        captionEl.textContent = "R and E are left — clear the board and your hand to win.";
+      });
+
+      rulesDemoAfter(6900, play);
+    }
+    play();
+  }
+
+  /* ---------------------------------------------------------
+     Pointer-based drag and drop
+  --------------------------------------------------------- */
+  let dragState = null;
+  const CARD_RATIO = 0.72; // width : height
+
+  // Clears any inline sizing/highlight applied during a drag so elements fall back
+  // to their resting CSS-variable-driven size (set by computeTileSize/renderBoard).
+  function resetBoardDragLayout(){
+    const boardEl = document.getElementById("board");
+    if(!boardEl) return;
+    boardEl.style.minHeight = "";
+    boardEl.style.minHeight = "";
+    boardEl.querySelectorAll(".gap").forEach(g => {
+      g.classList.remove("hover");
+      g.style.width = "";
+      g.style.height = "";
+    });
+    boardEl.querySelectorAll(".tile").forEach(t => {
+      t.classList.remove("magnify");
+      t.style.width = "";
+      t.style.height = "";
+      t.style.fontSize = "";
+    });
+  }
+
+  function clearDragHighlights(){
+    resetBoardDragLayout();
+    document.querySelectorAll(".hand.hover").forEach(h => h.classList.remove("hover"));
+  }
+
+  // Applies a "fisheye" layout centered on the active gap: the gap itself and its one
+  // or two neighboring tiles grow to match the size of the tile being dragged (so the
+  // player can see exactly what will land there), while the remaining tiles and gaps
+  // shrink just enough that the whole row still fits on one line with no scrollbar.
+  function applyMagnifyLayout(activeIndex, draggedW, draggedH){
+    const boardEl = document.getElementById("board");
+    const gaps = Array.from(boardEl.querySelectorAll(".gap"));
+    const tiles = Array.from(boardEl.querySelectorAll(".tile"));
+    const n = tiles.length;
+
+    const available = Math.max(1, boardEl.clientWidth - 4);
+    const staticGap = 2;
+    const staticTileW = Math.max(1,
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tile-w")) || 40
+    );
+
+    const magIndices = [];
+    if(activeIndex - 1 >= 0) magIndices.push(activeIndex - 1);
+    if(activeIndex < n) magIndices.push(activeIndex);
+
+    const magCount = magIndices.length;
+    const otherTileCount = Math.max(0, n - magCount);
+    const otherGapCount = Math.max(0, gaps.length - 1);
+    const fixedGapsWidth = otherGapCount * staticGap;
+
+    // Never let the magnified tiles exceed the physical size of the dragged hand tile.
+    // If the row is too narrow, reduce the magnified size only as much as necessary.
+    const desiredMagW = Math.max(1, draggedW);
+    const maxMagW = Math.max(1,
+      (available - fixedGapsWidth - otherTileCount) / Math.max(1, magCount + 1)
+    );
+    const magW = Math.min(desiredMagW, maxMagW);
+    const magH = Math.max(1, draggedH);
+    const magFont = Math.max(13, magH * 0.4);
+    const activeGapW = magW;
+
+    // Keep every non-magnified tile at its normal size whenever possible.
+    // Only shrink them when the magnified region actually needs the space.
+    const shrinkableWidth = Math.max(0, available - (magW * magCount + activeGapW + fixedGapsWidth));
+    const otherTileW = otherTileCount
+      ? Math.min(staticTileW, Math.max(1, shrinkableWidth / otherTileCount))
+      : 0;
+    const otherTileH = otherTileCount ? otherTileW / CARD_RATIO : 0;
+    const otherFont = otherTileCount ? Math.max(7, otherTileH * 0.4) : 0;
+
+    const rowHeight = Math.max(magH, otherTileH, 1);
+    boardEl.style.minHeight = (rowHeight + 20) + "px";
+
+    gaps.forEach((g, i) => {
+      g.classList.toggle("hover", i === activeIndex);
+      g.style.width = (i === activeIndex ? activeGapW : staticGap) + "px";
+      g.style.height = rowHeight + "px";
+    });
+
+    tiles.forEach((t, i) => {
+      const isMag = magIndices.includes(i);
+      t.classList.toggle("magnify", isMag);
+
+      if(isMag){
+        t.style.width = magW + "px";
+        t.style.height = magH + "px";
+        t.style.fontSize = magFont + "px";
+      } else {
+        t.style.width = otherTileW + "px";
+        t.style.height = otherTileH + "px";
+        t.style.fontSize = otherFont + "px";
+      }
+    });
+  }
+  // Finds the drop target nearest the pointer, using generous zones rather than
+  // requiring the pointer to sit exactly over a tiny gap element. Board gaps are
+  // matched by closest horizontal distance (so the whole board row is "live").
+  function findDropTarget(clientX, clientY, draggedW, draggedH, from){
+    resetBoardDragLayout();
+    document.querySelectorAll(".hand.hover").forEach(h => h.classList.remove("hover"));
+
+    const handEl = document.getElementById("hand");
+    const handRect = handEl.getBoundingClientRect();
+    const insideHand = clientX >= handRect.left && clientX <= handRect.right &&
+                       clientY >= handRect.top && clientY <= handRect.bottom;
+
+    // A tile dragged from the hand cannot be placed until its center/pointer has
+    // completely left the hand area. This prevents accidental board targeting while
+    // the tile is still being picked up.
+    if(from === "hand" && insideHand) return null;
+
+    if(from === "board" && insideHand){
+      handEl.classList.add("hover");
+      return { type: "hand" };
+    }
+
+    const boardEl = document.getElementById("board");
+    const boardRect = boardEl.getBoundingClientRect();
+    const verticalReach = Math.max(boardRect.height, draggedH, 56) * 0.75;
+    const nearBoard = clientY >= boardRect.top - verticalReach && clientY <= boardRect.bottom + verticalReach;
+
+    if(nearBoard){
+      const gaps = Array.from(boardEl.querySelectorAll(".gap"));
+      if(gaps.length){
+        let closestIdx=0, closestDist=Infinity;
+        gaps.forEach((g,i)=>{
+          const r=g.getBoundingClientRect();
+          const cx=r.left+r.width/2;
+          const dist=Math.abs(clientX-cx);
+          if(dist<closestDist){closestDist=dist; closestIdx=i;}
+        });
+        // Horizontal detection is constrained to the board's actual width.
+        if(clientX >= boardRect.left && clientX <= boardRect.right){
+          applyMagnifyLayout(closestIdx,draggedW,draggedH);
+          return {type:"board",index:closestIdx};
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function attachDrag(el, tile, from){
+    el.addEventListener("pointerdown",(e)=>{
+      if(pendingMatches || errorMessage || won) return;
+      e.preventDefault();
+      try{el.setPointerCapture(e.pointerId);}catch(err){}
+      document.body.classList.add("dragging");
+      const rect=el.getBoundingClientRect();
+      const ghost=el.cloneNode(true);
+      ghost.classList.add("ghost");
+      ghost.style.width=rect.width+"px";
+      ghost.style.height=rect.height+"px";
+      ghost.style.left=e.clientX+"px"; ghost.style.top=e.clientY+"px";
+      document.body.appendChild(ghost);
+      el.style.opacity="0.25";
+      dragState={tile,from,ghost,sourceEl:el};
+      let currentTarget=null;
+
+      const move=(ev)=>{
+        ghost.style.left=ev.clientX+"px"; ghost.style.top=ev.clientY+"px";
+        currentTarget=findDropTarget(ev.clientX,ev.clientY,rect.width,rect.height,from);
+      };
+      const up=(ev)=>{
+        window.removeEventListener("pointermove",move);
+        window.removeEventListener("pointerup",up);
+        document.body.classList.remove("dragging");
+        ghost.remove(); el.style.opacity=""; clearDragHighlights();
+        if(currentTarget) handleDrop(tile,from,currentTarget);
+        // If no target was selected, a hand tile simply returns to its hand.
+        // A placed board tile likewise remains where it started.
+        dragState=null;
+      };
+      window.addEventListener("pointermove",move);
+      window.addEventListener("pointerup",up);
+    });
+  }
+
+  function handleDrop(tile, from, target){
+    if(target.type === "board"){
+      if(from === "hand"){
+        const idx = hand.findIndex(t=>t.id===tile.id);
+        if(idx === -1) return;
+        const [t] = hand.splice(idx,1);
+        board.splice(target.index, 0, t);
+        placedIds.add(t.id);
+        lastMove = null;
+        setMessage("");
+        render();
+      } else if(from === "board"){
+        // reposition a tile placed this round
+        const idx = board.findIndex(t=>t.id===tile.id);
+        if(idx === -1 || !placedIds.has(tile.id)) return;
+        const [t] = board.splice(idx,1);
+        let newIndex = target.index;
+        if(idx < newIndex) newIndex -= 1;
+        board.splice(newIndex, 0, t);
+        render();
+      }
+    } else if(target.type === "hand" && from === "board"){
+      const idx = board.findIndex(t=>t.id===tile.id);
+      if(idx === -1 || !placedIds.has(tile.id)) return;
+      const [t] = board.splice(idx,1);
+      hand.push(t);
+      placedIds.delete(t.id);
+      lastMove = null;
+      setMessage("");
+      render();
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Daily, statistics, sharing, and navigation
+  --------------------------------------------------------- */
+  function defaultStats(){
+    const lengths={}; for(let i=3;i<=10;i++) lengths[i]=0;
+    return {streak:0, perfect:0, total:0, lastDaily:null, lengths};
+  }
+
+  function loadStats(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(STATS_KEY)||"");
+      const base=defaultStats();
+      return {...base,...saved,lengths:{...base.lengths,...(saved&&saved.lengths||{})}};
+    }catch(e){ return defaultStats(); }
+  }
+
+  function saveStats(stats){ localStorage.setItem(STATS_KEY,JSON.stringify(stats)); }
+
+  function recordStatsWin(){
+    const stats=loadStats();
+    stats.total++;
+    if(!initialHandSnapshot.some(t=>t.isWild) || hand.some(t=>t.isWild)) stats.perfect++;
+    for(const word of eliminatedWords){
+      const len=word.length;
+      if(len>=3 && len<=10) stats.lengths[len]=(stats.lengths[len]||0)+1;
+    }
+    saveStats(stats);
+  }
+
+  function loadDailyState(){
+    try{return JSON.parse(localStorage.getItem(DAILY_KEY)||"null");}catch(e){return null;}
+  }
+
+  function saveDailyState(){
+    if(puzzleMode!=="daily" || !puzzleDate) return;
+    const state=loadDailyState()||{};
+    state[puzzleDate]={won,moveCount,words:eliminatedWords.slice()};
+    localStorage.setItem(DAILY_KEY,JSON.stringify(state));
+  }
+
+  function isDailySolved(){
+    const state=loadDailyState();
+    return !!(state && state[localDateKey()] && state[localDateKey()].won);
+  }
+
+  function recordDailyWin(){
+    saveDailyState();
+    const stats=loadStats();
+    const today=localDateKey();
+    if(stats.lastDaily===today) return;
+    if(stats.lastDaily){
+      const prev=new Date(stats.lastDaily+"T12:00:00");
+      const now=new Date(today+"T12:00:00");
+      const days=Math.round((now-prev)/86400000);
+      stats.streak = days===1 ? stats.streak+1 : 1;
+    }else stats.streak=1;
+    stats.lastDaily=today;
+    saveStats(stats);
+  }
+
+  function startDaily(){
+    const today=localDateKey();
+    closeModal();
+    generatePuzzle("daily",today);
+  }
+
+  function buildShareText(){
+    const words=eliminatedWords.length ? eliminatedWords :
+      ((loadDailyState()||{})[puzzleDate||localDateKey()]||{}).words || [];
+    const moves=moveCount || (((loadDailyState()||{})[puzzleDate||localDateKey()]||{}).moveCount) || 0;
+    return "I solved today's Weaved in "+moves+" moves!\n\n"+
+      words.map(w=>w.charAt(0).toUpperCase()+"#".repeat(Math.max(0,w.length-1))).join("\n");
+  }
+
+  function isMobileDevice(){
+    try{
+      if(matchMedia("(pointer:coarse)").matches) return true;
+    }catch(e){}
+    return /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+  }
+
+  async function copyToClipboard(text){
+    try{
+      if(navigator.clipboard){ await navigator.clipboard.writeText(text); return true; }
+    }catch(e){}
+    try{
+      const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // On mobile, use the native share sheet. On desktop, skip the "choose app" prompt
+  // entirely and just copy — the trigger button (if given) shows brief confirmation.
+  async function shareDailyResult(triggerBtn){
+    const text=buildShareText();
+
+    if(isMobileDevice() && navigator.share){
+      try{ await navigator.share({text}); return; }catch(e){ /* user dismissed or share failed; fall through to copy */ }
+    }
+
+    const copied = await copyToClipboard(text);
+    if(triggerBtn){
+      const original = triggerBtn.textContent;
+      triggerBtn.textContent = copied ? "Results copied!" : "Couldn't copy";
+      triggerBtn.disabled = true;
+      setTimeout(()=>{ triggerBtn.textContent = original; triggerBtn.disabled = false; }, 1800);
+    }
+  }
+
+  function openMenu(){
+    showModal("menu",{closable:!!initialBoardSnapshot.length});
+  }
+
+  /* ---------------------------------------------------------
+     Daily countdown (shown on the menu once today's puzzle is solved)
+  --------------------------------------------------------- */
+  let dailyCountdownTimer=null;
+  function stopDailyCountdown(){
+    if(dailyCountdownTimer){ clearInterval(dailyCountdownTimer); dailyCountdownTimer=null; }
+  }
+  function timeUntilNextDaily(){
+    const now=new Date();
+    const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0);
+    const totalMinutes=Math.max(0,Math.floor((next-now)/60000));
+    const hh=String(Math.floor(totalMinutes/60)).padStart(2,"0");
+    const mm=String(totalMinutes%60).padStart(2,"0");
+    return hh+":"+mm;
+  }
+  function startDailyCountdown(){
+    stopDailyCountdown();
+    const tick=()=>{
+      const el=document.getElementById("dailyHint");
+      if(!el){ stopDailyCountdown(); return; }
+      el.textContent = timeUntilNextDaily()+" until the next daily, while you wait...";
+    };
+    tick();
+    dailyCountdownTimer=setInterval(tick,1000);
+  }
+
+  /* ---------------------------------------------------------
+     Theme (light / dark)
+  --------------------------------------------------------- */
+  const THEME_KEY="weavedTheme";
+  function getTheme(){
+    return document.documentElement.getAttribute("data-theme")==="dark" ? "dark" : "light";
+  }
+  function applyTheme(theme){
+    if(theme==="dark") document.documentElement.setAttribute("data-theme","dark");
+    else document.documentElement.removeAttribute("data-theme");
+    try{ localStorage.setItem(THEME_KEY, theme); }catch(e){}
+    updateThemeColorMeta();
+  }
+  function toggleTheme(){
+    applyTheme(getTheme()==="dark" ? "light" : "dark");
+  }
+  function initTheme(){
+    let saved=null;
+    try{ saved=localStorage.getItem(THEME_KEY); }catch(e){}
+    if(!saved){
+      try{ saved = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }catch(e){ saved="light"; }
+    }
+    applyTheme(saved);
+  }
+  function updateThemeColorMeta(){
+    const color = getComputedStyle(document.documentElement).getPropertyValue("--paper").trim() || "#f2e9d8";
+    let meta=document.querySelector('meta[name="theme-color"]');
+    if(!meta){ meta=document.createElement("meta"); meta.name="theme-color"; document.head.appendChild(meta); }
+    meta.content=color;
+  }
+
+  /* ---------------------------------------------------------
+     PWA install
+  --------------------------------------------------------- */
+  function generateAppIcon(size){
+    const canvas=document.createElement("canvas");
+    canvas.width=size; canvas.height=size;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#2b1e14"; ctx.fillRect(0,0,size,size);
+    ctx.fillStyle="#e2a95b";
+    ctx.font="bold "+Math.round(size*0.58)+"px Georgia, serif";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("W", size/2, size*0.56);
+    return canvas.toDataURL("image/png");
+  }
+
+  function registerServiceWorker(){
+    if(!("serviceWorker" in navigator)) return;
+    const swCode = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',()=>{});";
+    try{
+      const swUrl = URL.createObjectURL(new Blob([swCode], {type:"application/javascript"}));
+      navigator.serviceWorker.register(swUrl).catch(()=>{});
+    }catch(e){ /* registration requires a secure context; safe to ignore otherwise */ }
+  }
+
+  let installHelpText = "";
+  function showInstallHelp(){
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    installHelpText = isIOS
+      ? "To install Weaved, tap the Share icon in Safari, then \u201CAdd to Home Screen.\u201D"
+      : "Install isn't available right now. If your browser supports it, look for \u201CInstall app\u201D or \u201CAdd to Home Screen\u201D in its menu.";
+    showModal("install");
+  }
+
+  // Browser PWA install prompt when the browser offers one. Otherwise the button
+  // still gives useful, platform-aware instructions instead of doing nothing.
+  window.addEventListener("beforeinstallprompt",(e)=>{
+    e.preventDefault(); deferredInstallPrompt=e;
+  });
+  document.getElementById("installBtn").addEventListener("click",async()=>{
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      try{await deferredInstallPrompt.userChoice;}catch(e){}
+      deferredInstallPrompt=null;
+      return;
+    }
+    showInstallHelp();
+  });
+
+  document.getElementById("checkBtn").onclick=checkWord;
+  document.getElementById("undoBtn").addEventListener("click",undoLastMove);
+  document.getElementById("resetBtn").addEventListener("click",restartPuzzle);
+  document.getElementById("menuBtn").addEventListener("click",openMenu);
+  document.getElementById("rulesBtn").addEventListener("click",()=>showModal("rules"));
+
+  // Wiring for the static modal markup. Each modal's buttons live in the
+  // HTML (see the overlays after <main>) — this just hooks them up once.
+  document.getElementById("invalidOkBtn").addEventListener("click",()=>{ errorMessage=null; render(); });
+
+  document.getElementById("menuCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("dailyBtn").addEventListener("click",(e)=> isDailySolved() ? shareDailyResult(e.currentTarget) : startDaily());
+  document.getElementById("randomBtn").addEventListener("click",()=>{ closeModal(); generatePuzzle("random"); });
+  document.getElementById("menuRulesBtn").addEventListener("click",()=>showModal("rules"));
+  document.getElementById("menuStatsBtn").addEventListener("click",()=>showModal("stats"));
+  document.getElementById("menuThemeBtn").addEventListener("click",()=>{ toggleTheme(); updateModal(); });
+
+  document.getElementById("rulesCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("statsCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("shareCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("installCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("shareModalBtn").addEventListener("click",(e)=>shareDailyResult(e.currentTarget));
+
+  // Provide basic web-app metadata dynamically, including a generated icon so
+  // supporting browsers can treat Weaved as installable once it's hosted over HTTPS.
+  const appIcon192=generateAppIcon(192);
+  const appIcon512=generateAppIcon(512);
+  const manifestData={
+    name:"Weaved",short_name:"Weaved",display:"standalone",
+    background_color:"#f2e9d8",theme_color:"#f2e9d8",
+    start_url:location.href,
+    description:"A cozy word elimination puzzle.",
+    icons:[
+      {src:appIcon192,sizes:"192x192",type:"image/png"},
+      {src:appIcon512,sizes:"512x512",type:"image/png"}
+    ]
+  };
+  const manifestBlob=new Blob([JSON.stringify(manifestData)],{type:"application/manifest+json"});
+  const manifestLink=document.createElement("link");
+  manifestLink.rel="manifest"; manifestLink.href=URL.createObjectURL(manifestBlob);
+  document.head.appendChild(manifestLink);
+  const appleIconLink=document.createElement("link");
+  appleIconLink.rel="apple-touch-icon"; appleIconLink.href=appIcon192;
+  document.head.appendChild(appleIconLink);
+  const iconLink=document.createElement("link");
+  iconLink.rel="icon"; iconLink.href=appIcon192;
+  document.head.appendChild(iconLink);
+  registerServiceWorker();
+
+  // og:url / twitter:url depend on wherever this page ends up hosted, so
+  // they're filled in here rather than hardcoded in <head>.
+  const ogUrl=document.createElement("meta");
+  ogUrl.setAttribute("property","og:url"); ogUrl.content=location.href;
+  document.head.appendChild(ogUrl);
+  const twUrl=document.createElement("meta");
+  twUrl.setAttribute("name","twitter:url"); twUrl.content=location.href;
+  document.head.appendChild(twUrl);
+
+  initTheme();
+  // Start at the menu with no active puzzle.
+  board=[]; hand=[]; initialBoardSnapshot=[]; initialHandSnapshot=[];
+  render();
+  showModal("menu",{closable:false});
+
+})();
+</script>
+</body>
+</html>
