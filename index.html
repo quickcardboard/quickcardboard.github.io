@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>quickcardboard — daily puzzle games</title>
+<meta name="description" content="Quick, tabletop-style puzzle games you can play in the browser.">
+<link rel="icon" type="image/png" href="assets/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   Tokens
+   ========================================================= */
+:root{
+  --bg: #E9ECFA;
+  --surface: #FFFFFF;
+  --text: #1B2140;
+  --text-muted: #5B6280;
+  --accent: #3D53C7;
+  --accent-soft: #8CA0F5;
+  --accent-pop: #FF7A59;
+  --outline: #1B2140;
+  --border: #D7DCF3;
+  --focus-ring: #3D53C7;
+
+  --header-bg: #151B3B;
+  --header-text: #F2F4FF;
+  --header-text-muted: #A6ACD9;
+  --header-border: #0E1330;
+
+  --font: "Manrope", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+html[data-theme="dark"]{
+  --bg: #0B0E1A;
+  --surface: #151A2E;
+  --text: #EEF0FB;
+  --text-muted: #9198C0;
+  --accent: #8CA0F5;
+  --accent-soft: #3D53C7;
+  --accent-pop: #FF8F73;
+  --outline: #343B63;
+  --border: #242A48;
+  --focus-ring: #8CA0F5;
+
+  --header-bg: #1A2040;
+  --header-text: #EEF0FB;
+  --header-text-muted: #9198C0;
+  --header-border: #2B3260;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+*{ box-sizing: border-box; }
+html,body{ height: 100%; }
+
+body{
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+a{ color: inherit; }
+button{ font-family: inherit; background: none; border: none; color: inherit; cursor: pointer; }
+
+:focus-visible{
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* =========================================================
+   Header — its own zone: logo + name + controls only.
+   Visually separated from the body via a distinct background.
+   ========================================================= */
+.site-header{
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--header-bg);
+  color: var(--header-text);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.header-inner{
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn{
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--header-text);
+}
+.icon-btn:hover{ background: rgba(255,255,255,.08); }
+
+.brand{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+  min-width: 0;
+}
+.brand img{
+  display: block;
+  flex: none;
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+.brand-name{
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme-toggle{
+  justify-self: end;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--header-text);
+  border: 1px solid var(--header-border);
+  background: rgba(255,255,255,.06);
+  min-width: 56px;
+}
+.theme-toggle:hover{ background: rgba(255,255,255,.12); }
+
+/* menu dropdown */
+.menu-panel{
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 14px;
+  margin-top: 8px;
+  z-index: 20;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  flex-direction: column;
+  min-width: 180px;
+  box-shadow: 0 10px 30px rgba(10,16,28,.25);
+}
+.menu-panel.open{ display: flex; }
+
+.menu-item{
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: .95rem;
+  font-weight: 500;
+}
+.menu-item:hover{ background: var(--border); }
+
+/* =========================================================
+   Body content
+   ========================================================= */
+main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
+
+.intro{ padding: 28px 4px 6px; text-align: center; }
+.intro p{ margin: 0; color: var(--text-muted); font-size: 1rem; line-height: 1.55; }
+
+.games{ padding: 26px 4px 8px; }
+
+.section-label{
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0 0 14px 4px;
+}
+
+.game-list{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.game-card{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  min-height: 76px;
+  background: var(--surface);
+  border: 2px solid var(--outline);
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.game-card:hover, .game-card:focus-visible{
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.game-icon{
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.game-icon img{ width: 26px; height: 26px; object-fit: contain; }
+
+.game-copy{ flex: 1; min-width: 0; }
+.game-name{ font-weight: 700; font-size: 1.05rem; }
+.game-desc{
+  margin-top: 2px; font-size: .88rem; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.game-chevron{ flex: none; color: var(--accent); opacity: .8; }
+
+.empty-state{
+  padding: 20px 16px; border: 2px dashed var(--border); border-radius: 18px;
+  color: var(--text-muted); text-align: center; font-size: .95rem;
+}
+
+/* share row */
+.share{ padding: 30px 4px 10px; text-align: center; }
+.share p{ margin: 0 0 12px; font-size: .88rem; font-weight: 600; color: var(--text-muted); }
+.share-buttons{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.share-btn{
+  display: grid; place-items: center;
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  border: 2px solid var(--outline);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease, color .15s ease;
+}
+.share-btn:hover{ transform: translateY(-2px); border-color: var(--accent-pop); color: var(--accent-pop); }
+
+.site-footer{ padding: 18px 4px 36px; text-align: center; }
+.site-footer p{ margin: 0; font-size: .82rem; color: var(--text-muted); }
+
+/* =========================================================
+   Modals
+   ========================================================= */
+.modal{
+  width: 90vw; max-width: 420px;
+  border: 2px solid var(--outline);
+  border-radius: 20px;
+  padding: 28px 24px 26px;
+  background: var(--surface);
+  color: var(--text);
+  position: fixed; margin: auto; inset: 0;
+}
+.modal::backdrop{ background: rgba(10,14,20,.55); }
+.modal h2{ margin: 0 0 12px; font-weight: 800; font-size: 1.3rem; }
+.modal p{ margin: 0 0 10px; color: var(--text-muted); line-height: 1.55; font-size: .96rem; }
+.modal p:last-of-type{ margin-bottom: 0; }
+
+.modal-close{
+  position: absolute; top: 16px; right: 16px;
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 10px; color: var(--text-muted);
+}
+.modal-close:hover{ background: var(--border); color: var(--text); }
+
+.contact-link{
+  display: inline-block; margin-top: 10px; font-weight: 700;
+  color: var(--accent); text-decoration: none;
+  border-bottom: 2px solid var(--accent-soft);
+}
+
+@supports (transition-behavior: allow-discrete){
+  .modal{
+    opacity: 0; transform: translateY(8px) scale(.98);
+    transition: opacity .18s ease, transform .18s ease, display .18s allow-discrete, overlay .18s allow-discrete;
+  }
+  .modal[open]{ opacity: 1; transform: translateY(0) scale(1); }
+  @starting-style{ .modal[open]{ opacity: 0; transform: translateY(8px) scale(.98); } }
+  .modal::backdrop{ opacity: 0; transition: opacity .18s ease, display .18s allow-discrete, overlay .18s allow-discrete; }
+  .modal[open]::backdrop{ opacity: 1; }
+  @starting-style{ .modal[open]::backdrop{ opacity: 0; } }
+}
+
+@media (min-width: 620px){
+  .intro{ padding-top: 40px; }
+}
+</style>
+</head>
+<body>
+
+  <!-- ============ HEADER (logo + name + controls, distinct zone) ============ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="icon-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="menuPanel" aria-label="Open menu">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <div class="brand">
+        <img src="assets/logo.png" alt="">
+        <span class="brand-name">quickcardboard</span>
+      </div>
+
+      <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">Dark</button>
+
+      <!-- dropdown menu panel -->
+      <div class="menu-panel" id="menuPanel">
+        <button class="menu-item" data-modal="aboutModal">About</button>
+        <button class="menu-item" data-modal="comingSoonModal">Coming soon</button>
+        <button class="menu-item" data-modal="contactModal">Contact me</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ BODY ============ -->
+  <main>
+
+    <section class="intro">
+      <p>Tabletop-style puzzles, sized for a coffee break.</p>
+    </section>
+
+    <section class="games" aria-labelledby="gamesHeading">
+      <h2 id="gamesHeading" class="section-label">Games</h2>
+      <ul class="game-list" id="gameList"><!-- injected by script --></ul>
+    </section>
+
+    <section class="share">
+      <p>Share quickcardboard</p>
+      <div class="share-buttons">
+        <a class="share-btn" id="shareX" href="#" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3l7.5 9.6L3.4 21H6l5.8-6.6L16.5 21H21l-7.9-10.1L20.4 3H18l-5.3 6L8 3H3z" fill="currentColor"/></svg>
+        </a>
+        <a class="share-btn" id="shareFacebook" href="#" target="_blank" rel="noopener" aria-label="Share on Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.5 21v-7.6h2.6l.4-3H13.5V8.4c0-.87.24-1.46 1.5-1.46h1.6V4.28C16.3 4.2 15.3 4.1 14.2 4.1c-2.3 0-3.9 1.4-3.9 3.98v2.32H7.7v3h2.6V21h3.2z" fill="currentColor"/></svg>
+        </a>
+        <a class="share-btn" id="shareReddit" href="#" target="_blank" rel="noopener" aria-label="Share on Reddit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="7.2" stroke="currentColor" stroke-width="1.6"/><circle cx="9.3" cy="13.2" r="1" fill="currentColor"/><circle cx="14.7" cy="13.2" r="1" fill="currentColor"/><path d="M9 16c1 .8 4 .8 5.4 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 9.6l.7-3.6 2.6.6M16.7 5.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" stroke="currentColor" stroke-width="1.2"/></svg>
+        </a>
+        <button class="share-btn" id="shareCopy" type="button" aria-label="Copy link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 15l6-6M9.5 6.5l1-1a3 3 0 0 1 4.24 4.24l-1.5 1.5M14.5 17.5l-1 1a3 3 0 0 1-4.24-4.24l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>&copy; <span id="year"></span> quickcardboard</p>
+    </footer>
+
+  </main>
+
+  <!-- ============ MODALS ============ -->
+
+  <dialog class="modal" id="aboutModal">
+    <button class="modal-close" data-close aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2>About</h2>
+    <p>A showcase of small web games I have created. Inspired by my love for puzzles and board games. Come for the daily puzzles and compete with your friends! Each game is tested to be simple to learn, but hard to perfect. New games will show up here when they're finished brewing.</p>
+  </dialog>
+
+  <dialog class="modal" id="comingSoonModal">
+    <button class="modal-close" data-close aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2>Coming soon</h2>
+    <p>Something new is in progress.</p>
+  </dialog>
+
+  <dialog class="modal" id="contactModal">
+    <button class="modal-close" data-close aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2>Contact me</h2>
+    <p>Questions, bug reports, or ideas and feedback.</p>
+    <a class="contact-link" href=""></a>
+  </dialog>
+
+<script>
+/* =========================================================
+   Game registry — add new games here only.
+   `path` is the site-relative path the game lives at.
+   ========================================================= */
+const GAMES = [
+  { name: "CYPhase", path: "/cyphase", desc: "Minesweeper like tile game" },
+  { name: "Weaved",  path: "/weaved",  desc: "Your ultimate word scramble" },
+];
+
+const SITE_ORIGIN = "https://quickcardboard.com";
+const FALLBACK_ICON = "assets/logo.png";
+
+function renderGames(){
+  const list = document.getElementById("gameList");
+
+  if (!GAMES.length){
+    const li = document.createElement("li");
+    li.className = "empty-state";
+    li.textContent = "No games published yet — check back soon.";
+    list.appendChild(li);
+    return;
+  }
+
+  GAMES.forEach(game => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.className = "game-card";
+    a.href = SITE_ORIGIN + game.path;
+    a.setAttribute("aria-label", `Play ${game.name}`);
+
+    a.innerHTML = `
+      <span class="game-icon">
+        <img src="${FALLBACK_ICON}" alt="" width="26" height="26">
+      </span>
+      <span class="game-copy">
+        <span class="game-name">${game.name}</span>
+        <span class="game-desc">${game.desc}</span>
+      </span>
+      <svg class="game-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    li.appendChild(a);
+    list.appendChild(li);
+    loadGameFavicon(a.querySelector("img"), game.path);
+  });
+}
+
+/* ---------------------------------------------------------
+   Pull each game's live favicon from its own page, so the
+   button icon matches whatever the game currently ships in
+   its <head>. Tries the game's own page first (works once
+   deployed under quickcardboard.com), then Google's favicon
+   service as a visible placeholder before that, then falls
+   all the way back to the site logo if both fail.
+   --------------------------------------------------------- */
+function loadGameFavicon(imgEl, path){
+  const pageUrl = SITE_ORIGIN + path + "/";
+
+  imgEl.onerror = () => {
+    imgEl.onerror = null;
+    imgEl.src = FALLBACK_ICON;
+  };
+
+  fetch(pageUrl)
+    .then(res => { if (!res.ok) throw new Error("unreachable"); return res.text(); })
+    .then(html => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const link = doc.querySelector('link[rel~="icon"]');
+      const href = link ? link.getAttribute("href") : "/favicon.ico";
+      imgEl.src = new URL(href, pageUrl).href;
+    })
+    .catch(() => {
+      // Same-origin fetch isn't possible until this is deployed
+      // under quickcardboard.com (or when previewing locally).
+      // Show a placeholder from Google's favicon service instead
+      // of leaving the button looking broken.
+      imgEl.src = `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(pageUrl)}&sz=64`;
+    });
+}
+
+/* ---------------------------------------------------------
+   Menu dropdown
+   --------------------------------------------------------- */
+function setupMenu(){
+  const menuBtn = document.getElementById("menuBtn");
+  const panel = document.getElementById("menuPanel");
+
+  function closeMenu(){
+    panel.classList.remove("open");
+    menuBtn.setAttribute("aria-expanded", "false");
+  }
+  function openMenu(){
+    panel.classList.add("open");
+    menuBtn.setAttribute("aria-expanded", "true");
+  }
+
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.classList.contains("open") ? closeMenu() : openMenu();
+  });
+
+  panel.querySelectorAll(".menu-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      closeMenu();
+      const modal = document.getElementById(btn.dataset.modal);
+      if (modal) modal.showModal();
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (panel.classList.contains("open") && !panel.contains(e.target)){
+      closeMenu();
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+}
+
+/* ---------------------------------------------------------
+   Modals
+   --------------------------------------------------------- */
+function setupModals(){
+  document.querySelectorAll(".modal").forEach(modal => {
+    modal.querySelector("[data-close]")?.addEventListener("click", () => modal.close());
+    modal.addEventListener("click", e => {
+      const rect = modal.getBoundingClientRect();
+      const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
+                     e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!inside) modal.close();
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   Theme toggle — single button, labeled with the theme it
+   switches you TO ("Dark" while light is active, "light"
+   while dark is active).
+   --------------------------------------------------------- */
+function setupTheme(){
+  const root = document.documentElement;
+  const btn = document.getElementById("themeToggle");
+  const STORAGE_KEY = "qcb-theme";
+
+  function apply(theme){
+    root.setAttribute("data-theme", theme);
+    btn.setAttribute("aria-pressed", String(theme === "dark"));
+    btn.textContent = theme === "light" ? "Dark" : "light";
+    btn.setAttribute("aria-label", theme === "light" ? "Switch to dark theme" : "Switch to light theme");
+  }
+
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  apply(stored || preferred);
+
+  btn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    apply(next);
+    localStorage.setItem(STORAGE_KEY, next);
+  });
+}
+
+/* ---------------------------------------------------------
+   Share buttons
+   --------------------------------------------------------- */
+function setupShare(){
+  const url = encodeURIComponent(SITE_ORIGIN + "/");
+  const text = encodeURIComponent("quickcardboard — quick tabletop-style puzzle games");
+
+  document.getElementById("shareX").href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  document.getElementById("shareFacebook").href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+  document.getElementById("shareReddit").href = `https://www.reddit.com/submit?url=${url}&title=${text}`;
+
+  const copyBtn = document.getElementById("shareCopy");
+  copyBtn.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(SITE_ORIGIN + "/");
+      const original = copyBtn.innerHTML;
+      copyBtn.textContent = "✓";
+      setTimeout(() => { copyBtn.innerHTML = original; }, 1400);
+    }catch(err){
+      // clipboard unavailable — no-op
+    }
+  });
+}
+
+/* ---------------------------------------------------------
+   Init
+   --------------------------------------------------------- */
+document.getElementById("year").textContent = new Date().getFullYear();
+renderGames();
+setupMenu();
+setupModals();
+setupTheme();
+setupShare();
+</script>
+</body>
+</html>
