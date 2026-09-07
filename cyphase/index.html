@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>CYPhase</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Favicon: 2x2 grid on a dark panel — teal (top-left), blank (top-right), gold (bottom-left), plum (bottom-right) -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23202124'/%3E%3Crect x='6' y='6' width='24' height='24' rx='5' fill='%231B998B'/%3E%3Crect x='34' y='6' width='24' height='24' rx='5' fill='%23303339'/%3E%3Crect x='6' y='34' width='24' height='24' rx='5' fill='%23F2B705'/%3E%3Crect x='34' y='34' width='24' height='24' rx='5' fill='%236A4C93'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23202124'/%3E%3Crect x='6' y='6' width='24' height='24' rx='5' fill='%231B998B'/%3E%3Crect x='34' y='6' width='24' height='24' rx='5' fill='%23303339'/%3E%3Crect x='6' y='34' width='24' height='24' rx='5' fill='%23F2B705'/%3E%3Crect x='34' y='34' width='24' height='24' rx='5' fill='%236A4C93'/%3E%3C/svg%3E">
+
+  <!-- PWA: manifest lives alongside this file -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CYPhase">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Discovery / SEO meta tags -->
+  <meta name="description"
+    content="CYPhase is a daily color-logic puzzle. Fill a 6x6 grid with three colors so each tile's number matches how many of its neighbors share its color.">
+  <meta name="keywords" content="CYPhase, color puzzle, logic puzzle, daily puzzle, brain teaser, puzzle game">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#202124">
+
+  <!-- Open Graph (Facebook, LinkedIn, iMessage, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CYPhase — a color logic puzzle">
+  <meta property="og:description"
+    content="Fill the board with three colored tiles. Beat your friend's high score in the Daily puzzle!">
+  <!-- og:url and og:image need absolute URLs once this is live on your domain, e.g.: -->
+  <!-- <meta property="og:url" content="https://yourdomain.com/cyphase.html"> -->
+  <!-- <meta property="og:image" content="https://yourdomain.com/cyphase-share.png"> -->
+
+  <!-- Twitter/X card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CYPhase — a color logic puzzle">
+  <meta name="twitter:description"
+    content="Fill the board with three colored tiles. Beat your friend's high score in the Daily puzzle!">
+  <style>
+    /* --c1/--c2/--c3: C = teal, Y = gold, P = plum */
+    :root {
+      --bg: #202124;
+      --panel: #2A2C31;
+      --surface: #303339;
+      --ink: #F2F3F5;
+      --ink-soft: #9AA0AC;
+      --line: #3D4048;
+      --line-soft: #34363C;
+      --overlay: rgba(0, 0, 0, 0.6);
+      --shadow: rgba(0, 0, 0, 0.5);
+      --note-bg: #646973;
+      --error: #FF5C5C;
+
+      --c1: #1B998B;
+      /* C = teal */
+      --c1-ink: #FFFFFF;
+      --c2: #F2B705;
+      /* Y = gold */
+      --c2-ink: #3A2E00;
+      --c3: #6A4C93;
+      /* P = plum */
+      --c3-ink: #FFFFFF;
+
+      --radius: 6px;
+      --gap: 6px;
+      --menu-btn-height: 54px;
+    }
+
+    /* Light theme: the three requested theme colors become the C/Y/P accents. */
+    :root[data-theme="light"] {
+      --bg: #F3F4F5;
+      --panel: #E0E0E0;
+      --surface: #F3F4F5;
+      --ink: #2B2D30;
+      --ink-soft: #62666D;
+      --line: #A8ABB0;
+      --line-soft: #C3C5C9;
+      --overlay: rgba(35, 37, 40, 0.38);
+      --shadow: rgba(35, 37, 40, 0.22);
+      --note-bg: #9AA0AC;
+      --error: #E08A2E;
+
+      --c1: #6DB8C5;
+      --c1-ink: #15343A;
+      --c2: #ABE166;
+      --c2-ink: #26352A;
+      --c3: #CE5374;
+      --c3-ink: #FFFFFF;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 48px;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      margin-bottom: 14px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 2.0rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      border-radius: 7px;
+      display: block;
+    }
+
+    .icon-btn {
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 140ms ease, background-color 140ms ease;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-btn {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #rulesBtn.header-btn {
+      padding: 0 16px;
+    }
+
+    #addHomeBtn.header-btn {
+      width: 42px;
+      flex: 0 0 42px;
+      padding: 0;
+    }
+
+    #addHomeBtn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    .difficulty {
+      display: flex;
+      gap: 6px;
+    }
+
+    .diff-btn {
+      flex: 1;
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.85rem;
+      font-weight: 600;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+    }
+
+    .diff-btn:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .diff-btn.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+
+    .status {
+      width: 100%;
+      min-height: 24px;
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--c1);
+      text-align: center;
+    }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: var(--gap);
+      background: var(--panel);
+      padding: var(--gap);
+      border-radius: 9px;
+      box-shadow: 0 1px 2px var(--shadow), 0 10px 28px var(--shadow);
+      border: 1px solid var(--line-soft);
+      user-select: none;
+    }
+
+    .tile {
+      position: relative;
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.15rem, 5.6vw, 1.7rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink-soft);
+      cursor: pointer;
+      padding: 0;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .tile:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .tile:focus-visible {
+      outline: 2.5px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    .tile:active {
+      transform: scale(0.94);
+    }
+
+    .tile.c1 {
+      background: var(--c1);
+      border-color: var(--c1);
+      color: var(--c1-ink);
+    }
+
+    .tile.c2 {
+      background: var(--c2);
+      border-color: var(--c2);
+      color: var(--c2-ink);
+    }
+
+    .tile.c3 {
+      background: var(--c3);
+      border-color: var(--c3);
+      color: var(--c3-ink);
+    }
+
+    .tile.given {
+      cursor: default;
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.55);
+    }
+
+    .tile.given:hover {
+      border-color: inherit;
+    }
+
+    .tile.error {
+      box-shadow: inset 0 0 0 4px var(--error);
+    }
+
+    .note-dots {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      display: flex;
+      gap: 3px;
+    }
+
+    .note-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: none;
+    }
+
+    .note-dot.show {
+      display: block;
+    }
+
+    .note-dot.nd1 {
+      background: var(--c1);
+    }
+
+    .note-dot.nd2 {
+      background: var(--c2);
+    }
+
+    .note-dot.nd3 {
+      background: var(--c3);
+    }
+
+    /* Win state is used for interaction locking/status. The actual win
+     animation is driven by the Web Animations API in checkWin(), which
+     avoids class-toggle/style-recalculation timing issues. */
+    .board.win .tile {
+      will-change: transform, box-shadow;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      40% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .counts {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      transition: background-color 160ms ease, border-color 160ms ease;
+    }
+
+    .counts.note-active {
+      background: var(--note-bg);
+      border-color: var(--line);
+    }
+
+    .counts.note-active .count-pill b {
+      color: var(--ink);
+    }
+
+    .count-pills {
+      flex: 1;
+      display: flex;
+      justify-content: space-around;
+      gap: 6px;
+    }
+
+    .count-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .count-swatch {
+      appearance: none;
+      border: none;
+      padding: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .count-swatch svg {
+      width: 58%;
+      height: 58%;
+    }
+
+    .count-swatch:hover {
+      transform: scale(1.08);
+    }
+
+    .count-swatch:focus-visible {
+      outline: 2.5px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    .count-swatch.active {
+      box-shadow: 0 0 0 3px var(--ink);
+    }
+
+    .count-swatch.c1 {
+      background: var(--c1);
+    }
+
+    .count-swatch.c2 {
+      background: var(--c2);
+    }
+
+    .count-swatch.c3 {
+      background: var(--c3);
+    }
+    
+    /* rules section */
+
+.rules-example-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-width: 220px;
+  margin: 2px auto 18px;
+}
+
+.rules-example-tile {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.rules-example-tile.c1 {
+  background: var(--c1);
+  color: var(--c1-ink);
+}
+
+.rules-example-tile.c2 {
+  background: var(--c2);
+  color: var(--c2-ink);
+}
+
+.rules-example-tile.c3 {
+  background: var(--c3);
+  color: var(--c3-ink);
+}    
+
+
+    
+    .rules-note-example {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 2px 0 18px;
+    }
+
+    .rules-note-example .count-swatch {
+      cursor: default;
+    }
+
+    .rules-note-example .count-swatch:hover {
+      transform: none;
+    }
+
+    .rules-note-example .rules-note-text {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      line-height: 1.6;
+    }
+
+    .count-pill b {
+      font-size: 1.45rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      width: 2.1ch;
+      display: inline-block;
+      text-align: left;
+      transition: color 160ms ease;
+    }
+
+    .clear-notes-btn {
+      appearance: none;
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 140ms ease, background-color 140ms ease;
+    }
+
+    .clear-notes-btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 75%, var(--ink) 25%);
+    }
+
+    .clear-notes-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .actions {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    button.btn {
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 16px;
+      border-radius: 13px;
+      cursor: pointer;
+      flex: 1 1 auto;
+      min-height: 54px;
+      transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+      user-select: none;
+    }
+
+    button.btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    button.btn:focus-visible {
+      outline: 2.5px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    button.btn:active {
+      transform: scale(0.97);
+    }
+
+    #checkBtn {
+      font-size: 1.2rem;
+    }
+
+    button.btn.icon-only {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 54px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #clearBtn .hold-fill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      background: color-mix(in srgb, var(--ink) 35%, transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #clearBtn.holding .hold-fill {
+      width: 100%;
+      transition: width 1.5s linear;
+    }
+
+    #clearBtn svg {
+      position: relative;
+      z-index: 1;
+    }
+
+    button.btn.icon-only svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    #clearBtn {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .modal p {
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+
+    .modal .btn {
+      width: 100%;
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .menu-header h2 {
+      margin: 0;
+    }
+
+    .icon-btn-round {
+      appearance: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 1.15rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .icon-btn-round:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .daily-btn {
+      width: 100%;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-radius: 13px;
+      border: 1.5px solid var(--ink);
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 800;
+      font-size: 1rem;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 6px;
+      transition: opacity 140ms ease;
+    }
+
+    .menu-sub {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin: 6px 0 10px;
+      text-align: center;
+    }
+
+    .menu-tools {
+      display: flex;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .menu-tools .icon-btn {
+      flex: 1;
+      min-width: 0;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 8px;
+    }
+
+    .share-card {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--panel);
+    }
+
+    .brand-tag {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0 0 8px;
+    }
+
+    .score-block {
+      text-align: center;
+      margin: 4px 0 16px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--ink);
+      border-radius: 14px;
+    }
+
+    .score-label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+
+    .score-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+
+    .win-stats {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin: 0 0 16px;
+    }
+
+    .stat {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      min-height: 1.7em;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      margin-top: auto;
+    }
+
+    .stat.stat-c1 {
+      background: var(--c1);
+      border-color: var(--c1);
+    }
+
+    .stat.stat-c1 .stat-label,
+    .stat.stat-c1 .stat-value {
+      color: var(--c1-ink);
+    }
+
+    .stat.stat-c2 {
+      background: var(--c2);
+      border-color: var(--c2);
+    }
+
+    .stat.stat-c2 .stat-label,
+    .stat.stat-c2 .stat-value {
+      color: var(--c2-ink);
+    }
+
+    .stat.stat-c3 {
+      background: var(--c3);
+      border-color: var(--c3);
+    }
+
+    .stat.stat-c3 .stat-label,
+    .stat.stat-c3 .stat-value {
+      color: var(--c3-ink);
+    }
+
+    .win-daily-tag {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      text-align: center;
+      margin: 0;
+    }
+
+    .win-header {
+      margin-bottom: 14px;
+    }
+
+    .win-header h2 {
+      margin: 0;
+    }
+
+    .win-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .win-actions .btn {
+      width: auto;
+    }
+
+    .stats-total {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      margin: 0 0 6px;
+    }
+
+    .stats-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 160px;
+      margin: 14px 0 4px;
+    }
+
+    .stats-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      min-width: 0;
+    }
+
+    .stats-bar-count {
+      font-size: 0.62rem;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-bar {
+      width: 100%;
+      min-height: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .stats-bar.c1 {
+      background: var(--c1);
+    }
+
+    .stats-bar.c2 {
+      background: var(--c2);
+    }
+
+    .stats-bar.c3 {
+      background: var(--c3);
+    }
+
+    .stats-bar-label {
+      font-size: 0.58rem;
+      color: var(--ink-soft);
+      margin-top: 6px;
+      white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tile {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game">
+    <header>
+      <div class="header-top">
+        <h1>
+          <img class="brand-logo" alt="" aria-hidden="true"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23202124'/%3E%3Crect x='6' y='6' width='24' height='24' rx='5' fill='%231B998B'/%3E%3Crect x='34' y='6' width='24' height='24' rx='5' fill='%23303339'/%3E%3Crect x='6' y='34' width='24' height='24' rx='5' fill='%23F2B705'/%3E%3Crect x='34' y='34' width='24' height='24' rx='5' fill='%236A4C93'/%3E%3C/svg%3E">
+          CYPhase
+        </h1>
+        <div class="header-actions">
+          <button class="icon-btn header-btn" id="addHomeBtn" type="button" aria-label="Add to homescreen"
+            title="Add to homescreen" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 3v13" />
+              <path d="M7 11l5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+          </button>
+          <button class="icon-btn header-btn" id="rulesBtn" type="button" aria-haspopup="dialog">Rules</button>
+        </div>
+      </div>
+    </header>
+
+    <p class="status" id="status" aria-live="polite"></p>
+
+    <div class="board" id="board" role="group" aria-label="Puzzle board"></div>
+
+    <div class="counts" id="countsPanel">
+      <div class="count-pills">
+        <span class="count-pill">
+          <button class="count-swatch c1" id="swatch1" type="button" data-color="1"
+            aria-label="Take notes in the first color">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" opacity="0.5">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <b id="count1">12</b>
+        </span>
+        <span class="count-pill">
+          <button class="count-swatch c2" id="swatch2" type="button" data-color="2"
+            aria-label="Take notes in the second color">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" opacity="0.5">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <b id="count2">12</b>
+        </span>
+        <span class="count-pill">
+          <button class="count-swatch c3" id="swatch3" type="button" data-color="3"
+            aria-label="Take notes in the third color">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" opacity="0.5">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <b id="count3">12</b>
+        </span>
+      </div>
+      <button class="clear-notes-btn" id="clearNotesBtn" type="button" aria-label="Clear all notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18" />
+          <line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="checkBtn" type="button">Check</button>
+      <button class="btn icon-only" id="clearBtn" type="button" aria-label="Hold for 3 seconds to reset the board">
+        <span class="hold-fill" aria-hidden="true"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M20 11A8 8 0 1 0 18.5 16" />
+          <polyline points="20 4 20 11 13 11" />
+        </svg>
+      </button>
+      <button class="btn icon-only" id="menuToggleBtn" type="button" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <line x1="4" y1="7" x2="20" y2="7" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="17" x2="20" y2="17" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="menuOverlay">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>CYPhase</h2>
+        <button class="icon-btn-round" id="menuCloseBtn" type="button" aria-label="Close menu">&times;</button>
+      </div>
+
+      <button class="daily-btn" id="dailyBtn" type="button">Daily Puzzle</button>
+
+      <p class="menu-sub" id="menuSub">Or choose a difficulty for a random puzzle:</p>
+      <div class="difficulty" id="menuDifficulty">
+        <button class="diff-btn" data-difficulty="easy" type="button">Easy</button>
+        <button class="diff-btn active" data-difficulty="medium" type="button">Medium</button>
+        <button class="diff-btn" data-difficulty="hard" type="button">Hard</button>
+      </div>
+      <div class="menu-tools">
+        <button class="icon-btn" id="menuRulesBtn" type="button">Rules</button>
+        <button class="icon-btn" id="menuStatsBtn" type="button">Statistics</button>
+        <button class="icon-btn theme-toggle" id="themeToggleBtn" type="button" aria-pressed="false">Light mode</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="rulesOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="menu-header">
+        <h2 id="rulesTitle">How to play</h2>
+        <button class="icon-btn-round" id="rulesCloseBtn" type="button" aria-label="Close rules">&times;</button>
+      </div>
+
+      <div class="rules-example-grid">
+  <div class="rules-example-tile c2">1</div>
+  <div class="rules-example-tile c1">1</div>
+  <div class="rules-example-tile c3">0</div>
+  <div class="rules-example-tile c2">2</div>
+  <div class="rules-example-tile c1">3</div>
+  <div class="rules-example-tile c2">1</div>
+  <div class="rules-example-tile c1">1</div>
+  <div class="rules-example-tile c2">2</div>
+  <div class="rules-example-tile c1">1</div>
+</div>
+      
+      <p>
+        Fill the board with colored tiles. The number on each tile indicates how many neighbors share the tile's
+        color. Click the tile to change its color. <strong>Can you do it without any checks?</strong>
+      </p>
+
+      <div class="rules-note-example">
+        <span class="count-swatch c1" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" opacity="0.5">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+        </span>
+        <span class="rules-note-text">Click to toggle pencil mode</span>
+      </div>
+
+      <!-- <h2>Daily Puzzle</h2>
+      <p>
+        Compete against your friends for the high score! The Daily Puzzle gives everyone the same board each day and can
+        only be completed once per day.
+      </p> -->
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="winOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="menu-header win-header">
+        <h2 id="winTitle">Solved!</h2>
+        <button class="icon-btn-round" id="winCloseBtn" type="button" aria-label="Close results">&times;</button>
+      </div>
+      <div id="winCard" class="share-card">
+        <span class="brand-tag">CYPhase</span>
+
+        <div class="score-block">
+          <span class="score-label">Score</span>
+          <span class="score-value" id="winScore">0</span>
+        </div>
+
+        <div class="win-stats">
+          <div class="stat stat-c1">
+            <span class="stat-label">Time spent</span>
+            <span class="stat-value" id="winTime">0:00</span>
+          </div>
+          <div class="stat stat-c2">
+            <span class="stat-label">Checks used</span>
+            <span class="stat-value" id="winHints">0</span>
+          </div>
+          <div class="stat stat-c3">
+            <span class="stat-label">Errors found</span>
+            <span class="stat-value" id="winErrors">0</span>
+          </div>
+        </div>
+
+        <p class="win-daily-tag" id="winDailyTag" style="display:none;">Daily Puzzle · <span id="winDailyDate"></span>
+        </p>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="shareBtn" type="button" style="display:none;">Share</button>
+        <button class="btn" id="statsBtn" type="button" style="display:none;">Statistics</button>
+        <button class="btn" id="winNewBtn" type="button">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="statsOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+      <div id="statsCard" class="share-card">
+        <span class="brand-tag">CYPhase</span>
+        <h2 id="statsTitle">Daily Puzzle Stats</h2>
+        <p class="stats-total"><span id="statsTotal">0 games played</span> · <span id="statsStreak">0 day streak</span></p>
+        <div class="stats-chart" id="statsChart"></div>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="statsShareBtn" type="button">Share</button>
+        <button class="btn" id="statsBackBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    (function () {
+      const SIZE = 6;
+      const TOTAL = SIZE * SIZE;
+
+      // --- DOM references ---------------------------------------------------
+      const boardEl = document.getElementById('board');
+      const statusEl = document.getElementById('status');
+      const clearBtn = document.getElementById('clearBtn');
+      const menuToggleBtn = document.getElementById('menuToggleBtn');
+      const checkBtn = document.getElementById('checkBtn');
+      const rulesBtn = document.getElementById('rulesBtn');
+      const rulesCloseBtn = document.getElementById('rulesCloseBtn');
+      const rulesOverlay = document.getElementById('rulesOverlay');
+      const menuOverlay = document.getElementById('menuOverlay');
+      const menuCloseBtn = document.getElementById('menuCloseBtn');
+      const menuRulesBtn = document.getElementById('menuRulesBtn');
+      const menuStatsBtn = document.getElementById('menuStatsBtn');
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const menuDiffButtons = Array.from(document.querySelectorAll('#menuDifficulty .diff-btn'));
+      const dailyBtn = document.getElementById('dailyBtn');
+      const winOverlay = document.getElementById('winOverlay');
+      const winCloseBtn = document.getElementById('winCloseBtn');
+      const winNewBtn = document.getElementById('winNewBtn');
+      const winCardEl = document.getElementById('winCard');
+      const winTitleEl = document.getElementById('winTitle');
+      const winScoreEl = document.getElementById('winScore');
+      const winTimeEl = document.getElementById('winTime');
+      const winHintsEl = document.getElementById('winHints');
+      const winErrorsEl = document.getElementById('winErrors');
+      const winDailyTag = document.getElementById('winDailyTag');
+      const winDailyDateEl = document.getElementById('winDailyDate');
+      const shareBtn = document.getElementById('shareBtn');
+      const statsBtn = document.getElementById('statsBtn');
+      const statsOverlay = document.getElementById('statsOverlay');
+      const statsCardEl = document.getElementById('statsCard');
+      const statsTotalEl = document.getElementById('statsTotal');
+      const statsStreakEl = document.getElementById('statsStreak');
+      const menuSubEl = document.getElementById('menuSub');
+      const addHomeBtn = document.getElementById('addHomeBtn');
+      const statsChartEl = document.getElementById('statsChart');
+      const statsShareBtn = document.getElementById('statsShareBtn');
+      const statsBackBtn = document.getElementById('statsBackBtn');
+      const countsPanel = document.getElementById('countsPanel');
+      const clearNotesBtn = document.getElementById('clearNotesBtn');
+      const countEls = [null, document.getElementById('count1'), document.getElementById('count2'), document.getElementById('count3')];
+      const swatchEls = [null, document.getElementById('swatch1'), document.getElementById('swatch2'), document.getElementById('swatch3')];
+
+      let solution = [];
+      let hints = [];
+      let given = [];
+      let player = [];
+      let notes = [];
+      let noteColor = 0;
+      let currentDifficulty = 'medium';
+      let startTime = 0;
+      let hintsUsed = 0;
+      let errorsFound = 0;
+      let isDailyMode = false;
+      let hasActivePuzzle = false;
+      let gameWon = false;
+      let currentSolvedStats = null;
+
+      // --- geometry -------------------------------------------------------
+      const neighborsOf = [];
+      for (let idx = 0; idx < TOTAL; idx++) {
+        const r = Math.floor(idx / SIZE);
+        const c = idx % SIZE;
+        const list = [];
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+              list.push(nr * SIZE + nc);
+            }
+          }
+        }
+        neighborsOf.push(list);
+      }
+
+      const readyIndex = neighborsOf.map((list, idx) => Math.max(idx, ...list));
+      const verifyList = Array.from({ length: TOTAL }, () => []);
+      readyIndex.forEach((k, idx) => verifyList[k].push(idx));
+
+      // --- seeded randomness (for the daily puzzle) ------------------------
+      function xmur3(str) {
+        let h = 1779033703 ^ str.length;
+        for (let i = 0; i < str.length; i++) {
+          h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+          h = (h << 13) | (h >>> 19);
+        }
+        return function () {
+          h = Math.imul(h ^ (h >>> 16), 2246822519);
+          h = Math.imul(h ^ (h >>> 13), 3266489917);
+          h ^= h >>> 16;
+          return h >>> 0;
+        };
+      }
+
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function makeSeededRandom(seedStr) {
+        const seedFn = xmur3(seedStr);
+        return mulberry32(seedFn());
+      }
+
+      function todayStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+
+      function formatDisplayDate(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      // --- streak & daily reset countdown -----------------------------------
+      function dateStrToDate(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function addDaysToDate(dt, n) {
+        const result = new Date(dt);
+        result.setDate(result.getDate() + n);
+        return result;
+      }
+
+      // Counts consecutive daily-puzzle completions ending today (or ending
+      // yesterday, if today's daily hasn't been played yet but the streak is
+      // still alive until the day resets).
+      function computeCurrentStreak(history) {
+        const playedDates = new Set(history.map(entry => entry && entry.date).filter(Boolean));
+        if (playedDates.size === 0) return 0;
+
+        const todayD = todayStr();
+        let cursor = playedDates.has(todayD) ? dateStrToDate(todayD) : addDaysToDate(dateStrToDate(todayD), -1);
+
+        let streak = 0;
+        while (playedDates.has(
+          cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0') + '-' + String(cursor.getDate()).padStart(2, '0')
+        )) {
+          streak++;
+          cursor = addDaysToDate(cursor, -1);
+        }
+        return streak;
+      }
+
+      function msUntilNextDaily() {
+        const now = new Date();
+        const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+        return next - now;
+      }
+
+      function formatCountdown(ms) {
+        const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      }
+
+      // --- generation -------------------------------------------------------
+      function generateSolution(rand) {
+        rand = rand || Math.random;
+        const colors = [];
+        for (let c = 1; c <= 3; c++) {
+          for (let i = 0; i < 12; i++) colors.push(c);
+        }
+        for (let i = colors.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [colors[i], colors[j]] = [colors[j], colors[i]];
+        }
+        return colors;
+      }
+
+      function computeHints(sol) {
+        return sol.map((color, idx) => {
+          let count = 0;
+          for (const n of neighborsOf[idx]) {
+            if (sol[n] === color) count++;
+          }
+          return count;
+        });
+      }
+
+      function countSolutions(hintsArr, givenMask, limit, nodeBudget) {
+        const assigned = new Array(TOTAL).fill(0);
+        const colorCount = [0, 0, 0, 0];
+        let solutions = 0;
+        let nodes = 0;
+        let aborted = false;
+
+        function step(k) {
+          if (aborted || solutions >= limit) return;
+          nodes++;
+          if (nodes > nodeBudget) { aborted = true; return; }
+
+          if (k === TOTAL) {
+            solutions++;
+            return;
+          }
+
+          const fixed = givenMask[k];
+          const candidates = fixed ? [fixed] : [1, 2, 3];
+
+          for (const color of candidates) {
+            if (colorCount[color] >= 12) continue;
+
+            colorCount[color]++;
+            assigned[k] = color;
+
+            let ok = true;
+            const remainingCells = TOTAL - (k + 1);
+            for (let c = 1; c <= 3; c++) {
+              if (12 - colorCount[c] > remainingCells) { ok = false; break; }
+            }
+
+            if (ok) {
+              for (const idx of verifyList[k]) {
+                let cnt = 0;
+                for (const n of neighborsOf[idx]) {
+                  if (assigned[n] === assigned[idx]) cnt++;
+                }
+                if (cnt !== hintsArr[idx]) { ok = false; break; }
+              }
+            }
+
+            if (ok) step(k + 1);
+
+            assigned[k] = 0;
+            colorCount[color]--;
+
+            if (aborted || solutions >= limit) return;
+          }
+        }
+
+        step(0);
+        return { count: solutions, aborted };
+      }
+
+      function findMinimalReveal(sol, hintsArr, rand) {
+        rand = rand || Math.random;
+        const order = Array.from({ length: TOTAL }, (_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+
+        const NODE_BUDGET = 120000;
+        const mask = new Array(TOTAL).fill(0);
+
+        for (let i = 0; i < order.length; i++) {
+          const result = countSolutions(hintsArr, mask, 2, NODE_BUDGET);
+          if (!result.aborted && result.count === 1) {
+            return { order, baseCount: i };
+          }
+          mask[order[i]] = sol[order[i]];
+        }
+
+        return { order, baseCount: TOTAL };
+      }
+
+      function generatePuzzle(rand) {
+        rand = rand || Math.random;
+        const MAX_ATTEMPTS = 200;
+        let best = null;
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+          const sol = generateSolution(rand);
+          const hnts = computeHints(sol);
+          const reveal = findMinimalReveal(sol, hnts, rand);
+          if (!best || reveal.baseCount < best.reveal.baseCount) {
+            best = { sol, hnts, reveal };
+          }
+          if (reveal.baseCount <= 3) {
+            return { sol, hnts, reveal };
+          }
+        }
+        return best;
+      }
+
+      function maskForDifficulty(order, baseCount, sol, difficulty) {
+        const extra = difficulty === 'hard' ? 2 : (difficulty === 'medium' ? 4 : 8);
+        const count = Math.min(baseCount + extra, TOTAL);
+        const mask = new Array(TOTAL).fill(0);
+        for (let k = 0; k < count; k++) {
+          mask[order[k]] = sol[order[k]];
+        }
+        return mask;
+      }
+
+      // --- scoring ------------------------------------------------------------
+      // Daily play is always at Medium (base 1000). Regular play's ceiling
+      // depends on the chosen difficulty: Easy 800, Medium 1000, Hard 1200.
+      function computeScore(elapsedSeconds, checks, errors, difficulty) {
+        const base = difficulty === 'easy' ? 800 : (difficulty === 'hard' ? 1200 : 1000);
+        const timePenalty = Math.floor(elapsedSeconds / 3);
+        const checkPenalty = checks * 25;
+        const errorPenalty = errors * 50;
+        let score = base - timePenalty - checkPenalty - errorPenalty;
+        score = Math.max(0, Math.min(base - 1, score));
+        return score;
+      }
+
+      // --- persistence (daily puzzle completion + score history) -----------
+      // This game is a standalone HTML file, so use the browser's localStorage.
+      // The previous version relied on window.storage, which is not a standard
+      // browser API and therefore silently resulted in an empty statistics history
+      // when the file was opened directly.
+      function hasStorage() {
+        try {
+          return typeof window !== 'undefined' && !!window.localStorage;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function storageGet(key) {
+        if (!hasStorage()) return null;
+        try {
+          return window.localStorage.getItem(key);
+        } catch (err) {
+          console.error('Could not read saved CYPhase data', err);
+          return null;
+        }
+      }
+
+      function storageSet(key, value) {
+        if (!hasStorage()) return false;
+        try {
+          window.localStorage.setItem(key, value);
+          return true;
+        } catch (err) {
+          console.error('Could not save CYPhase data', err);
+          return false;
+        }
+      }
+
+      let dailyCompletedStats = null;
+
+      async function refreshDailyButtonState() {
+        let status = null;
+        const raw = storageGet('cyphase-daily-status:' + todayStr());
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.completed) status = parsed;
+          } catch (err) {
+            status = null;
+          }
+        }
+        dailyCompletedStats = status;
+        dailyBtn.disabled = false;
+        dailyBtn.textContent = status ? 'View daily puzzle result' : 'Daily Puzzle';
+      }
+
+      function showSolvedResult(stats) {
+        if (!stats) return;
+        winTitleEl.textContent = stats.title;
+        winScoreEl.textContent = stats.score;
+        winTimeEl.textContent = formatTime(stats.time);
+        winHintsEl.textContent = stats.hints;
+        winErrorsEl.textContent = stats.errors;
+        winDailyTag.style.display = stats.isDaily ? '' : 'none';
+        if (stats.isDaily) {
+          winDailyDateEl.textContent = formatDisplayDate(stats.date || todayStr());
+          shareBtn.style.display = '';
+          statsBtn.style.display = '';
+        } else {
+          winDailyDateEl.textContent = '';
+          shareBtn.style.display = 'none';
+          statsBtn.style.display = 'none';
+        }
+        winCloseBtn.style.display = '';
+        winOverlay.classList.add('open');
+      }
+
+      // Keep the result belonging to the puzzle currently on the board separate
+      // from the saved Daily Puzzle result. This prevents visiting Daily Results
+      // or Statistics from replacing the current puzzle's View results data.
+      function showCurrentGameResult() {
+        showSolvedResult(currentSolvedStats);
+      }
+
+      function showDailyResult(stats) {
+        showSolvedResult({
+          title: stats.hints === 0 ? 'Daily perfect solve!' : 'Solved daily puzzle!',
+          score: stats.score,
+          time: stats.time,
+          hints: stats.hints,
+          errors: stats.errors,
+          isDaily: true,
+          date: todayStr()
+        });
+      }
+
+      async function markDailyCompleted(stats) {
+        storageSet(
+          'cyphase-daily-status:' + todayStr(),
+          JSON.stringify(Object.assign({ completed: true }, stats))
+        );
+      }
+
+      async function loadDailyHistory() {
+        const raw = storageGet('cyphase-daily-history');
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+          console.error('Could not parse saved daily history', err);
+          return [];
+        }
+      }
+
+      async function appendDailyHistory(entry) {
+        const history = await loadDailyHistory();
+
+        // A daily puzzle can only count once. This also prevents duplicate entries
+        // if the win flow is triggered twice accidentally.
+        if (entry && entry.date && history.some(item => item && item.date === entry.date)) return;
+
+        history.push(entry);
+        storageSet('cyphase-daily-history', JSON.stringify(history));
+      }
+
+      function bucketizeScores(history) {
+        const buckets = new Array(10).fill(0);
+        for (const entry of history) {
+          const idx = Math.max(0, Math.min(9, Math.floor(entry.score / 100)));
+          buckets[idx]++;
+        }
+        return buckets;
+      }
+
+      function renderStatsChart(buckets) {
+        const colorCycle = ['c1', 'c2', 'c3'];
+        const max = Math.max(1, ...buckets);
+        statsChartEl.innerHTML = '';
+        for (let i = 0; i < buckets.length; i++) {
+          const col = document.createElement('div');
+          col.className = 'stats-bar-col';
+
+          const countLabel = document.createElement('span');
+          countLabel.className = 'stats-bar-count';
+          countLabel.textContent = buckets[i];
+
+          const bar = document.createElement('div');
+          bar.className = 'stats-bar ' + colorCycle[i % colorCycle.length];
+          bar.style.height = ((buckets[i] / max) * 100) + '%';
+
+          const rangeLabel = document.createElement('span');
+          rangeLabel.className = 'stats-bar-label';
+          rangeLabel.textContent = i * 100;
+
+          col.appendChild(countLabel);
+          col.appendChild(bar);
+          col.appendChild(rangeLabel);
+          statsChartEl.appendChild(col);
+        }
+      }
+
+      // --- game flow -------------------------------------------------------
+      function newGame(opts) {
+        opts = opts || {};
+        isDailyMode = !!opts.daily;
+        const rand = isDailyMode ? makeSeededRandom('cyphase-daily-' + todayStr()) : Math.random;
+        const difficulty = isDailyMode ? 'medium' : currentDifficulty;
+
+        const built = generatePuzzle(rand);
+        solution = built.sol;
+        hints = built.hnts;
+
+        given = maskForDifficulty(built.reveal.order, built.reveal.baseCount, solution, difficulty);
+        player = given.slice();
+        notes = new Array(TOTAL).fill(0);
+        setNoteColor(0);
+
+        startTime = Date.now();
+        hintsUsed = 0;
+        errorsFound = 0;
+        hasActivePuzzle = true;
+        gameWon = false;
+        currentSolvedStats = null;
+        checkBtn.textContent = 'Check';
+        checkBtn.setAttribute('aria-label', 'Check for errors');
+
+        renderBoard();
+        setStatus('');
+        boardEl.classList.remove('win');
+      }
+
+      function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let i = 0; i < TOTAL; i++) {
+          const tile = document.createElement('button');
+          tile.type = 'button';
+          tile.className = 'tile';
+          tile.dataset.index = i;
+
+          const num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = hints[i];
+          tile.appendChild(num);
+
+          const dots = document.createElement('span');
+          dots.className = 'note-dots';
+          for (let c = 1; c <= 3; c++) {
+            const dot = document.createElement('span');
+            dot.className = 'note-dot nd' + c;
+            dots.appendChild(dot);
+          }
+          tile.appendChild(dots);
+
+          if (given[i]) {
+            tile.classList.add('given');
+            tile.disabled = true;
+            tile.setAttribute('aria-label', 'Tile ' + (i + 1) + ', ' + hints[i] + ' matching neighbors needed, given and locked');
+          } else {
+            tile.addEventListener('click', onTileClick);
+            tile.setAttribute('aria-label', 'Tile ' + (i + 1) + ', ' + hints[i] + ' matching neighbors needed');
+          }
+          boardEl.appendChild(tile);
+        }
+        paintTiles();
+      }
+
+      const colorClass = ['', 'c1', 'c2', 'c3'];
+
+      function paintTiles() {
+        const tiles = boardEl.children;
+        for (let i = 0; i < TOTAL; i++) {
+          const t = tiles[i];
+          t.classList.remove('c1', 'c2', 'c3');
+          if (player[i] > 0) t.classList.add(colorClass[player[i]]);
+        }
+        updateCounts();
+      }
+
+      function updateCounts() {
+        const placed = [0, 0, 0, 0];
+        for (let i = 0; i < TOTAL; i++) {
+          if (player[i] > 0) placed[player[i]]++;
+        }
+        for (let c = 1; c <= 3; c++) {
+          countEls[c].textContent = 12 - placed[c];
+        }
+      }
+
+      function updateNoteDots(idx) {
+        const dots = boardEl.children[idx].querySelectorAll('.note-dot');
+        for (let c = 1; c <= 3; c++) {
+          dots[c - 1].classList.toggle('show', !!(notes[idx] & (1 << (c - 1))));
+        }
+      }
+
+      function setNoteColor(color) {
+        noteColor = color;
+        for (let c = 1; c <= 3; c++) {
+          swatchEls[c].classList.toggle('active', c === noteColor);
+        }
+        countsPanel.classList.toggle('note-active', noteColor > 0);
+      }
+
+      function onTileClick(e) {
+        if (boardEl.classList.contains('win')) return;
+        const idx = Number(e.currentTarget.dataset.index);
+        if (given[idx]) return;
+
+        setStatus('');
+
+        if (noteColor > 0) {
+          notes[idx] ^= (1 << (noteColor - 1));
+          updateNoteDots(idx);
+          return;
+        }
+
+        e.currentTarget.classList.remove('error');
+        player[idx] = (player[idx] + 1) % 4;
+        paintTiles();
+        checkWin();
+      }
+
+      function checkErrors() {
+        hintsUsed++;
+        const tiles = boardEl.children;
+        let errorCount = 0;
+        let filledCount = 0;
+        for (let i = 0; i < TOTAL; i++) {
+          tiles[i].classList.remove('error');
+          if (given[i]) continue;
+          if (player[i] === 0) continue;
+          filledCount++;
+          if (player[i] !== solution[i]) {
+            tiles[i].classList.add('error');
+            errorCount++;
+          }
+        }
+        errorsFound += errorCount;
+        if (filledCount === 0) {
+          setStatus('Place some colors first!');
+        } else if (errorCount === 0) {
+          setStatus('No errors, keep going!');
+        } else {
+          setStatus(errorCount === 1 ? '1 tile is incorrect.' : errorCount + ' tiles are incorrect.');
+        }
+      }
+
+      function formatTime(totalSeconds) {
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        return m + ':' + String(s).padStart(2, '0');
+      }
+
+      function checkWin() {
+        for (let i = 0; i < TOTAL; i++) {
+          if (player[i] !== solution[i]) return;
+        }
+
+        const tiles = Array.from(boardEl.children);
+
+        // Lock the board immediately. The visual animation is intentionally
+        // driven with the Web Animations API rather than relying on a CSS class
+        // toggle. This makes the animation deterministic even when the final
+        // tile click, CSS transitions, and style recalculation all happen in
+        // the same event loop turn.
+        boardEl.classList.add('win');
+        gameWon = true;
+        checkBtn.textContent = 'View results';
+        checkBtn.setAttribute('aria-label', 'View puzzle results');
+        setStatus('Solved!');
+
+        const reduceMotion = window.matchMedia &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const animations = [];
+        if (!reduceMotion) {
+          tiles.forEach((tile, i) => {
+            const animation = tile.animate(
+              [
+                { transform: 'scale(1)' },
+                { transform: 'scale(1.1)', offset: 0.4 },
+                { transform: 'scale(1)' }
+              ],
+              {
+                duration: 480,
+                delay: i * 35,
+                easing: 'ease',
+                fill: 'both'
+              }
+            );
+            animations.push(animation);
+          });
+        }
+
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const scoreDifficulty = isDailyMode ? 'medium' : currentDifficulty;
+        const score = computeScore(elapsedSeconds, hintsUsed, errorsFound, scoreDifficulty);
+        const dailyTitle = hintsUsed === 0 ? 'You have perfectly solved the daily!' : 'Solved daily puzzle!';
+        currentSolvedStats = {
+          title: isDailyMode ? dailyTitle : ('Solved ' + currentDifficulty + ' puzzle!'),
+          score,
+          time: elapsedSeconds,
+          hints: hintsUsed,
+          errors: errorsFound,
+          isDaily: isDailyMode,
+          date: todayStr()
+        };
+        const totalAnimMs = reduceMotion ? 0 : (TOTAL - 1) * 35 + 480;
+
+        setTimeout(async () => {
+          // Populate win modal, daily storage, etc.
+          winTitleEl.textContent = isDailyMode ? dailyTitle : ('Solved ' + currentDifficulty + ' puzzle!');
+          winScoreEl.textContent = score;
+          winTimeEl.textContent = formatTime(elapsedSeconds);
+          winHintsEl.textContent = hintsUsed;
+          winErrorsEl.textContent = errorsFound;
+
+          if (isDailyMode) {
+            await markDailyCompleted({ time: elapsedSeconds, hints: hintsUsed, errors: errorsFound, score });
+            await appendDailyHistory({ date: todayStr(), score });
+            refreshDailyButtonState();
+          }
+
+          showCurrentGameResult();
+        }, totalAnimMs);
+      }
+
+      function setStatus(msg) {
+        statusEl.textContent = msg;
+      }
+
+      function clearNotes() {
+        notes = new Array(TOTAL).fill(0);
+        for (const t of boardEl.children) {
+          for (const dot of t.querySelectorAll('.note-dot')) dot.classList.remove('show');
+        }
+      }
+
+      function performBoardReset() {
+        player = given.slice();
+        clearNotes();
+        paintTiles();
+        for (const t of boardEl.children) t.classList.remove('error');
+        setStatus('');
+        boardEl.classList.remove('win');
+      }
+
+      // --- hold-to-confirm reset ---------------------------------------------
+      // The board only resets if the button is held down for the full 3
+      // seconds before being released. The fill bar (driven by the .holding
+      // class in CSS) gives a visual countdown; the actual timing check below
+      // uses real timestamps so it stays accurate regardless of animation.
+      const RESET_HOLD_MS = 1500;
+      let resetHoldStart = 0;
+      let resetHoldActive = false;
+
+      function startResetHold(e) {
+        if (e.type === 'pointerdown' && e.button !== undefined && e.button !== 0) return;
+        if (resetHoldActive) return;
+        resetHoldActive = true;
+        resetHoldStart = Date.now();
+        clearBtn.classList.add('holding');
+      }
+
+      function endResetHold() {
+        if (!resetHoldActive) return;
+        resetHoldActive = false;
+        const elapsed = Date.now() - resetHoldStart;
+        clearBtn.classList.remove('holding');
+        if (elapsed >= RESET_HOLD_MS) {
+          performBoardReset();
+        }
+      }
+
+      clearBtn.addEventListener('pointerdown', startResetHold);
+      clearBtn.addEventListener('pointerup', endResetHold);
+      clearBtn.addEventListener('pointerleave', endResetHold);
+      clearBtn.addEventListener('pointercancel', endResetHold);
+      clearBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      // Keyboard equivalent (Enter/Space) for accessibility, since pointer
+      // events don't fire for keyboard activation.
+      clearBtn.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
+          e.preventDefault();
+          startResetHold(e);
+        }
+      });
+      clearBtn.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          endResetHold();
+        }
+      });
+
+      checkBtn.addEventListener('click', () => {
+        if (gameWon) {
+          showCurrentGameResult();
+          return;
+        }
+        checkErrors();
+      });
+      clearNotesBtn.addEventListener('click', clearNotes);
+
+      swatchEls.slice(1).forEach((btn, i) => {
+        const color = i + 1;
+        btn.addEventListener('click', () => {
+          setNoteColor(noteColor === color ? 0 : color);
+        });
+      });
+
+      // --- theme ------------------------------------------------------------
+      function applyTheme(theme) {
+        const isLight = theme === 'light';
+        document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
+        themeToggleBtn.setAttribute('aria-pressed', String(isLight));
+        themeToggleBtn.textContent = isLight ? 'Dark mode' : 'Light mode';
+        storageSet('cyphase-theme', isLight ? 'light' : 'dark');
+      }
+
+      function initTheme() {
+        const saved = storageGet('cyphase-theme');
+        applyTheme(saved === 'light' ? 'light' : 'dark');
+      }
+
+      themeToggleBtn.addEventListener('click', () => {
+        const isLight = document.documentElement.dataset.theme === 'light';
+        applyTheme(isLight ? 'dark' : 'light');
+      });
+
+      // --- menu -------------------------------------------------------------
+      let menuSubInterval = null;
+
+      function updateMenuSub() {
+        if (dailyCompletedStats) {
+          menuSubEl.textContent = formatCountdown(msUntilNextDaily()) + ' until the next daily. While you wait...';
+        } else {
+          menuSubEl.textContent = 'Or choose a difficulty for a random puzzle:';
+        }
+      }
+
+      function openMenu() {
+        menuCloseBtn.style.display = hasActivePuzzle ? '' : 'none';
+        refreshDailyButtonState();
+        updateMenuSub();
+        menuOverlay.classList.add('open');
+        if (menuSubInterval) clearInterval(menuSubInterval);
+        menuSubInterval = setInterval(updateMenuSub, 30000);
+      }
+
+      function closeMenu() {
+        menuOverlay.classList.remove('open');
+        if (menuSubInterval) {
+          clearInterval(menuSubInterval);
+          menuSubInterval = null;
+        }
+      }
+
+      menuToggleBtn.addEventListener('click', openMenu);
+      menuCloseBtn.addEventListener('click', closeMenu);
+      menuStatsBtn.addEventListener('click', () => {
+        closeMenu();
+        openStats('menu');
+      });
+
+      dailyBtn.addEventListener('click', () => {
+        closeMenu();
+        if (dailyCompletedStats) {
+          showDailyResult(dailyCompletedStats);
+        } else {
+          newGame({ daily: true });
+        }
+      });
+
+      menuDiffButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          menuDiffButtons.forEach(b => b.classList.toggle('active', b === btn));
+          currentDifficulty = btn.dataset.difficulty;
+          closeMenu();
+          newGame({ daily: false });
+        });
+      });
+
+      winCloseBtn.addEventListener('click', () => {
+  winOverlay.classList.remove('open');
+  if (!hasActivePuzzle) {
+    openMenu();
+  }
+});
+
+      winNewBtn.addEventListener('click', () => {
+        winOverlay.classList.remove('open');
+        openMenu();
+      });
+
+      // --- share & statistics (daily puzzle win) ------------------------------
+      async function shareElementAsImage(el, filename, shareTitle, shareText) {
+        if (typeof html2canvas === 'undefined') {
+          alert("Sharing isn't available right now — please try again later.");
+          return;
+        }
+        try {
+          const canvas = await html2canvas(el, { backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#2A2C31' });
+          canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], filename, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({ files: [file], title: shareTitle, text: shareText });
+              } catch (err) {
+                // share sheet dismissed
+              }
+            } else {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          alert('Could not create the share image.');
+        }
+      }
+
+      shareBtn.addEventListener('click', () => {
+        shareElementAsImage(winCardEl, 'cyphase-daily-win.png', 'CYPhase Daily Puzzle', "I solved today's CYPhase daily puzzle!");
+      });
+
+      statsShareBtn.addEventListener('click', () => {
+        shareElementAsImage(statsCardEl, 'cyphase-daily-stats.png', 'CYPhase Daily Puzzle Stats', 'My CYPhase Daily Puzzle score history!');
+      });
+
+      let statsReturnTarget = 'menu';
+
+      async function openStats(returnTarget = 'menu') {
+        statsReturnTarget = returnTarget;
+        const history = await loadDailyHistory();
+        statsTotalEl.textContent = history.length + (history.length === 1 ? ' game played' : ' games played');
+        statsStreakEl.textContent = computeCurrentStreak(history) + ' day streak';
+        renderStatsChart(bucketizeScores(history));
+        statsOverlay.classList.add('open');
+      }
+
+      statsBtn.addEventListener('click', () => {
+        winOverlay.classList.remove('open');
+        openStats('win');
+      });
+
+      statsBackBtn.addEventListener('click', () => {
+        statsOverlay.classList.remove('open');
+        if (statsReturnTarget === 'win') {
+          winOverlay.classList.add('open');
+        } else {
+          openMenu();
+        }
+      });
+
+      // --- rules --------------------------------------------------------------
+      function openRules() { rulesOverlay.classList.add('open'); }
+      function closeRules() { rulesOverlay.classList.remove('open'); }
+
+      rulesBtn.addEventListener('click', openRules);
+      menuRulesBtn.addEventListener('click', openRules);
+      rulesCloseBtn.addEventListener('click', closeRules);
+      rulesOverlay.addEventListener('click', (e) => {
+        if (e.target === rulesOverlay) closeRules();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeRules();
+      });
+
+      // --- PWA install (add to homescreen) -----------------------------------
+      let deferredInstallPrompt = null;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        addHomeBtn.hidden = false;
+      });
+
+      addHomeBtn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        addHomeBtn.hidden = true;
+      });
+
+      window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        addHomeBtn.hidden = true;
+      });
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => { });
+        });
+      }
+
+      initTheme();
+      openMenu();
+    })();
+  </script>
+
+</body>
+
+</html>

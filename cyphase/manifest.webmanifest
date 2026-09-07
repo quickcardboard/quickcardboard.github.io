@@ -1,0 +1,24 @@
+{
+  "name": "CYPhase",
+  "short_name": "CYPhase",
+  "description": "A color logic puzzle. Fill the board so each tile's number matches how many neighbors share its color.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#202124",
+  "theme_color": "#202124",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23202124'/%3E%3Crect x='48' y='48' width='192' height='192' rx='40' fill='%231B998B'/%3E%3Crect x='272' y='48' width='192' height='192' rx='40' fill='%23303339'/%3E%3Crect x='48' y='272' width='192' height='192' rx='40' fill='%23F2B705'/%3E%3Crect x='272' y='272' width='192' height='192' rx='40' fill='%236A4C93'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23202124'/%3E%3Crect x='48' y='48' width='192' height='192' rx='40' fill='%231B998B'/%3E%3Crect x='272' y='48' width='192' height='192' rx='40' fill='%23303339'/%3E%3Crect x='48' y='272' width='192' height='192' rx='40' fill='%23F2B705'/%3E%3Crect x='272' y='272' width='192' height='192' rx='40' fill='%236A4C93'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
