@@ -687,6 +687,26 @@
       margin: 0;
     }
 
+    .hub-link{
+  display: block;
+  text-align: center;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 140ms ease;
+}
+
+.hub-link:hover,
+.hub-link:focus-visible{
+  color: var(--ink);
+  text-decoration: underline;
+}
+
     .icon-btn-round {
       appearance: none;
       width: 34px;
@@ -1062,6 +1082,9 @@
         <button class="icon-btn" id="menuStatsBtn" type="button">Statistics</button>
         <button class="icon-btn theme-toggle" id="themeToggleBtn" type="button" aria-pressed="false">Light mode</button>
       </div>
+      <a class="hub-link" href="https://quickcardboard.com">
+  ← Back to QuickCardboard
+</a>
     </div>
   </div>
 
