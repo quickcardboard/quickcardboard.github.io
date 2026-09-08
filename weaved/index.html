@@ -117,19 +117,19 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom: 6px;
+    margin-bottom: 14px;
   }
 
   .header-actions{
     display:flex;
     align-items:center;
-    gap:6px;
+    gap:8px;
   }
 
   h1{
     font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
     font-weight: 400;
-    font-size: 30px;
+    font-size: 32px;
     letter-spacing: 0.02em;
     margin: 0;
     color: var(--ink);
@@ -291,14 +291,17 @@
     display:flex;
     gap: 10px;
     align-items:center;
+    width:100%;
+    justify-content:center;
   }
 
   button{
     font-family: inherit;
-    font-size: 14px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: 1px solid var(--line);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 16px;
+    border-radius: 13px;
+    border: 1.5px solid var(--line);
     background: var(--tile-bg);
     color: var(--ink);
     cursor:pointer;
@@ -317,11 +320,37 @@
     border-color: var(--accent);
   }
 
+  /* Bottom control row: primary Check button flexes to fill the row,
+     the icon-only buttons are fixed 54px squares — matches CYPhase's
+     .actions / button.btn.icon-only sizing. */
+  .controls #checkBtn{
+    flex: 1 1 auto;
+    min-height: 54px;
+    font-size: 19px;
+  }
+
+  .controls .icon-btn{
+    flex: 0 0 54px;
+    width: 54px;
+    height: 54px;
+    min-height: 54px;
+    padding: 0;
+  }
+
+  .controls .icon-btn svg{
+    width: 22px;
+    height: 22px;
+  }
+
   .icon-btn{
     display:flex;
     align-items:center;
     justify-content:center;
-    padding: 10px 12px;
+    padding: 0 14px;
+    height: 42px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
     color: var(--ink-soft);
   }
   .icon-btn:hover:not(:disabled){
@@ -330,6 +359,16 @@
   .icon-btn:disabled{
     opacity: .35;
     cursor: not-allowed;
+  }
+
+  header #installBtn.icon-btn{
+    width: 42px;
+    flex: 0 0 42px;
+    padding: 0;
+  }
+
+  header #rulesBtn.icon-btn{
+    padding: 0 16px;
   }
 
   .flying-tile{
@@ -356,7 +395,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    padding: 24px;
+    padding: 20px;
     opacity: 0;
     pointer-events: none;
     transition: opacity .15s ease;
@@ -370,19 +409,19 @@
   .modal-box{
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 16px;
     padding: 22px;
     width: 100%;
-    max-width: 300px;
+    max-width: 380px;
     display:flex;
     flex-direction:column;
-    gap: 10px;
+    gap: 14px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.18);
   }
 
   .modal-title{
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     text-align:center;
     color: var(--ink);
   }
@@ -421,11 +460,10 @@
 
 
   .modal-box.wide{
-    width: 340px;
-    max-width: 88vw;
+    max-width: 380px;
     min-height: 340px;
     justify-content:flex-start;
-    padding: 24px 20px;
+    padding: 22px;
     gap: 14px;
   }
 
@@ -443,7 +481,7 @@
 
   .modal-title.left{
     text-align:left;
-    font-size:19px;
+    font-size:18px;
     font-weight:700;
     font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   }
@@ -452,11 +490,11 @@
     position:absolute;
     right:-8px;
     top:-8px;
-    width:32px;
-    height:32px;
+    width:34px;
+    height:34px;
     padding:0;
     border-radius:50%;
-    font-size:22px;
+    font-size:18px;
     line-height:1;
   }
 
@@ -473,26 +511,30 @@
 
   .menu-daily-btn{
     width:100%;
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     background: var(--tile-bg);
     color: var(--ink);
-    font-weight:700;
+    font-weight:800;
     font-size:16px;
     text-align:center;
-    padding:16px 12px;
-    border-radius:12px;
-    border:1px solid var(--line);
+    padding:0 16px;
+    border-radius:13px;
+    border:1.5px solid var(--line);
   }
 
   .menu-hint{
     text-align:center;
-    font-size:12.5px;
+    font-size:13px;
     color: var(--ink-soft);
-    margin: -4px 0 0;
+    margin: -8px 0 -4px;
   }
 
   .menu-pill-row{
     display:flex;
-    gap:8px;
+    gap:6px;
   }
 
   .menu-pill-row .menu-pill {
@@ -502,13 +544,17 @@
   .menu-pill{
     flex:0;
     min-width:0;
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     text-align:center;
-    padding:13px 4px;
+    padding:0 8px;
     border-radius:10px;
     font-weight:600;
     font-size:13.5px;
     background: var(--paper-2);
-    border:1px solid var(--line);
+    border:1.5px solid var(--line);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -630,7 +676,7 @@
   <h1>Weaved</h1>
   <div class="header-actions">
     <button id="installBtn" class="icon-btn" title="Install Weaved" aria-label="Install Weaved">
-      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/></svg>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/></svg>
     </button>
     <button id="rulesBtn" class="icon-btn" title="How to play" aria-label="How to play">Rules</button>
   </div>
@@ -651,13 +697,13 @@
   <div class="controls">
     <button class="primary" id="checkBtn">Check word</button>
     <button id="undoBtn" class="icon-btn" title="Undo last elimination" aria-label="Undo last elimination" disabled>
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
     </button>
     <button id="resetBtn" class="icon-btn" title="Restart this puzzle" aria-label="Restart this puzzle">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 8 8 8"/></svg>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 8 8 8"/></svg>
     </button>
     <button id="menuBtn" class="icon-btn" title="Menu" aria-label="Menu">
-      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
     </button>
   </div>
 </main>
