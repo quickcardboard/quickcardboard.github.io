@@ -144,13 +144,14 @@
   }
 
   main{
-    width: 100%;
-    max-width: 480px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap: 36px;
-    margin-top: 46px;
+  width: 100%;
+  max-width: 480px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 36px;
+  margin-top: 46px;
+  padding-bottom: 90px; /* clears the fixed control row below */
   }
 
   .board-wrap{
@@ -288,11 +289,18 @@
   }
 
   .controls{
-    display:flex;
-    gap: 10px;
-    align-items:center;
-    width:100%;
-    justify-content:center;
+     position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  width:100%;
+  max-width: 480px;
+  padding: 0 20px;
+  justify-content:center;
+  z-index: 10;
   }
 
   button{
@@ -737,15 +745,6 @@
   the invalid-play message, the share text, and the list of word choices).
 -->
 
-<div class="modal-overlay" id="invalidOverlay">
-  <div class="modal-box" id="invalidBox">
-    <div class="modal-header">
-      <div class="modal-title warn">Invalid play</div>
-    </div>
-    <div class="modal-message" id="invalidMessage"></div>
-    <button class="primary modal-ok" id="invalidOkBtn">OK</button>
-  </div>
-</div>
 
 <div class="modal-overlay" id="matchOverlay">
   <div class="modal-box" id="matchBox">
@@ -887,7 +886,7 @@
   let placedIds = new Set(); // ids of tiles on board placed this round
   let nextId = 1;
   let pendingMatches = null; // when multiple matches, list awaiting choice
-  let errorMessage = null;   // text for the invalid-play modal
+  // let errorMessage = null;   // text for the invalid-play modal
   let modalState = null;     // {type, closable} for whichever modal overlay is open
   let won = false;
   let puzzleMode = "random";
@@ -972,7 +971,7 @@
     eliminatedWords = [];
     placedIds = new Set();
     pendingMatches = null;
-    errorMessage = null;
+    // errorMessage = null;
     won = false;
     lastMove = null;
     setMessage("");
@@ -986,7 +985,7 @@
     hand = initialHandSnapshot.map(t => ({...t}));
     placedIds = new Set();
     pendingMatches = null;
-    errorMessage = null;
+    // errorMessage = null;
     won = false;
     moveCount = 0;
     eliminatedWords = [];
@@ -1113,7 +1112,7 @@
   // perfect-solve count, and word-length stats it recorded are un-recorded
   // too, and the "Share result" text goes back to matching what's on screen.
   function undoLastMove(){
-    if(!lastMove || pendingMatches || errorMessage) return;
+    if(!lastMove || pendingMatches) return;
     const m = lastMove;
     const wasWon = won;
 
@@ -1135,24 +1134,39 @@
     render();
   }
 
-  function attemptEliminate(match){
-    const resultingBoardLength = board.length - match.length;
-    const handHasLetters = hand.some(t => !t.isWild);
+  // function attemptEliminate(match){
+  //   const resultingBoardLength = board.length - match.length;
+  //   const handHasLetters = hand.some(t => !t.isWild);
 
-    if(resultingBoardLength === 0 && handHasLetters){
-      returnPlacedTilesToHand();
-      pendingMatches = null;
-      errorMessage = "Letters remain in the hand, invalid play.";
-      render();
-      return;
-    }
+  //   if(resultingBoardLength === 0 && handHasLetters){
+  //     returnPlacedTilesToHand();
+  //     pendingMatches = null;
+  //     errorMessage = "Letters remain in the hand, invalid play.";
+  //     render();
+  //     return;
+  //   }
 
-    setMessage("\u201C" + match.word + "\u201D cleared from the board.", "good");
-    eliminateMatch(match);
+  //   setMessage("\u201C" + match.word + "\u201D cleared from the board.", "good");
+  //   eliminateMatch(match);
+  // }
+function attemptEliminate(match){
+  const resultingBoardLength = board.length - match.length;
+  const handHasLetters = hand.some(t => !t.isWild);
+
+  if(resultingBoardLength === 0 && handHasLetters){
+    returnPlacedTilesToHand();
+    pendingMatches = null;
+    setMessage("Letters remain in your hand, that word can't clear the board yet.", "warn");
+    render();
+    return;
   }
 
+  setMessage("\u201C" + match.word + "\u201D cleared from the board.", "good");
+  eliminateMatch(match);
+}
+     
   function checkWord(){
-    if(pendingMatches || errorMessage) return;
+    if(pendingMatches) return;
     const matches = dedupeMatchesBySpan(computeMatches());
     if(matches.length === 0){
       // return this round's placed tiles to hand
@@ -1231,11 +1245,11 @@
     renderHand();
     updateModal();
     const checkBtn = document.getElementById("checkBtn");
-    checkBtn.disabled = !!pendingMatches || !!errorMessage;
+    checkBtn.disabled = !!pendingMatches;
     checkBtn.textContent = (won && puzzleMode === "daily") ? "Share result" : "Check word";
     checkBtn.onclick = (won && puzzleMode === "daily") ? (e)=>shareDailyResult(e.currentTarget) : checkWord;
 
-    document.getElementById("undoBtn").disabled = !lastMove || !!pendingMatches || !!errorMessage;
+    document.getElementById("undoBtn").disabled = !lastMove || !!pendingMatches;
 
     const main = document.querySelector("main");
     let banner = document.getElementById("winBanner");
@@ -1316,7 +1330,7 @@
         const el = tileEl(tile, "fixed" + (placed ? " placed" : ""));
         if(placed){
           el.addEventListener("click", () => {
-            if(pendingMatches || errorMessage) return;
+            if(pendingMatches) return;
             const idx = board.findIndex(t=>t.id===tile.id);
             if(idx === -1) return;
             const [t] = board.splice(idx,1);
@@ -1358,7 +1372,7 @@
     updateModal();
   }
 
-  const MODAL_OVERLAY_IDS = ["invalidOverlay","matchOverlay","menuOverlay","rulesOverlay","statsOverlay","shareOverlay","installOverlay"];
+  const MODAL_OVERLAY_IDS = ["matchOverlay","menuOverlay","rulesOverlay","statsOverlay","shareOverlay","installOverlay"];
 
   function hideAllModals(){
     for(const id of MODAL_OVERLAY_IDS){
@@ -1376,11 +1390,11 @@
     stopRulesDemo();
     hideAllModals();
 
-    if(errorMessage){
-      document.getElementById("invalidMessage").textContent = errorMessage;
-      document.getElementById("invalidOverlay").classList.add("visible");
-      return;
-    }
+    // if(errorMessage){
+    //   document.getElementById("invalidMessage").textContent = errorMessage;
+    //   document.getElementById("invalidOverlay").classList.add("visible");
+    //   return;
+    // }
 
     if(pendingMatches){
       const choices = document.getElementById("matchChoices");
@@ -1662,7 +1676,7 @@
 
   function attachDrag(el, tile, from){
     el.addEventListener("pointerdown",(e)=>{
-      if(pendingMatches || errorMessage || won) return;
+      if(pendingMatches || won) return;
       e.preventDefault();
       try{el.setPointerCapture(e.pointerId);}catch(err){}
       document.body.classList.add("dragging");
@@ -1956,7 +1970,7 @@
 
   // Wiring for the static modal markup. Each modal's buttons live in the
   // HTML (see the overlays after <main>) — this just hooks them up once.
-  document.getElementById("invalidOkBtn").addEventListener("click",()=>{ errorMessage=null; render(); });
+  // document.getElementById("invalidOkBtn").addEventListener("click",()=>{ errorMessage=null; render(); });
 
   document.getElementById("menuCloseBtn").addEventListener("click",closeModal);
   document.getElementById("dailyBtn").addEventListener("click",(e)=> isDailySolved() ? shareDailyResult(e.currentTarget) : startDaily());
