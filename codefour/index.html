@@ -1183,7 +1183,7 @@ h4 {
       currentBoard: blankBoard(), currentLocked: blankBooleanBoard(),
       notesJustEntered: false,
       isDaily: false,
-      resultTurns: 0, resultSolution: [], resultIsDaily: false, resultDateKey: null,
+      resultTurns: 0, resultSolution: [], resultIsDaily: false, resultDateKey: null, resultSolved: false,
       hasGame: false
     };
     function blankBoard() {return Array.from({length: 4}, () => Array(4).fill(""));}
@@ -1277,6 +1277,7 @@ h4 {
       state.resultSolution = dailyWords(dateKey);
       state.resultIsDaily = true;
       state.resultDateKey = dateKey;
+      state.resultSolved = true;
       document.getElementById("resultTitle").textContent = "Daily Puzzle Solved!";
       document.getElementById("resultTurns").textContent = rec.turns;
       document.getElementById("resultText").textContent = "";
@@ -1722,6 +1723,7 @@ h4 {
       state.resultSolution = [...state.solution];
       state.resultIsDaily = state.isDaily;
       state.resultDateKey = getLocalDateKey();
+      state.resultSolved = solved;
       if (solved && state.isDaily) {saveDailyResult(state.submittedCount); updateMenuDaily();}
       document.getElementById("resultTitle").textContent =
         solved ? "Solved!" : "Puzzle Complete";
@@ -1759,9 +1761,11 @@ h4 {
       const turns = state.resultTurns || state.submittedCount;
       const dateKey = state.resultDateKey || getLocalDateKey();
       const url = window.location.origin + window.location.pathname;
-      const intro = state.resultIsDaily
-        ? `I solved today's daily CodeFour in ${turns} turn${turns === 1 ? "" : "s"}!`
-        : `I solved CodeFour in ${turns} turn${turns === 1 ? "" : "s"}!`;
+      const intro = !state.resultSolved
+        ? "I did not solve today's CodeFour, you should have a try"
+        : state.resultIsDaily
+          ? `I solved today's daily CodeFour in ${turns} turn${turns === 1 ? "" : "s"}!`
+          : `I solved CodeFour in ${turns} turn${turns === 1 ? "" : "s"}!`;
       const shareText = `${intro}\n${formatShareDate(dateKey)}\n${url}`;
       try {
         const isComputer = !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
