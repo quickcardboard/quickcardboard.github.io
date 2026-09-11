@@ -695,13 +695,42 @@
     text-align:center;
     font-family:inherit;
   }
-  .win-banner{
-    font-family: Georgia, serif;
-    font-size: 22px;
-    color: var(--good);
-    text-align:center;
+  .win-word-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    max-height: 220px;
+    overflow-y:auto;
   }
-
+  .win-word-list li{
+    background: var(--paper-2);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:8px 14px;
+    text-align:center;
+    font-weight:700;
+    letter-spacing:0.04em;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .win-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:4px;
+  }
+  .win-actions-row{
+    display:flex;
+    gap:8px;
+  }
+  .win-actions-row .menu-pill{ flex:1; }
+     #winBox{
+  min-height: 0;
+}
+     
   .ghost{
     position: fixed;
     pointer-events:none;
@@ -847,6 +876,23 @@
     </div>
     <div class="modal-message share-text" id="shareText"></div>
     <button class="primary modal-ok" id="shareModalBtn" type="button">Share</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="winOverlay">
+  <div class="modal-box wide" id="winBox">
+    <div class="modal-header">
+      <div class="modal-title" id="winTitle">Perfect Weave!</div>
+      <button class="modal-close icon-btn" id="winCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <ul class="win-word-list" id="winWords"></ul>
+    <div class="win-actions">
+      <div class="win-actions-row">
+        <button class="menu-pill" id="winShareBtn" type="button">Share</button>
+        <button class="menu-pill" id="winStatsBtn" type="button">Statistics</button>
+        <button class="menu-pill" id="winMenuBtn" type="button">Menu</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1204,6 +1250,7 @@ function attemptEliminate(match){
       if(puzzleMode === "daily") recordDailyWin();
       recordStatsWin();
       setMessage("");
+      showModal("win", {closable:true});
     }
   }
 
@@ -1259,25 +1306,10 @@ function attemptEliminate(match){
     updateModal();
     const checkBtn = document.getElementById("checkBtn");
     checkBtn.disabled = !!pendingMatches;
-    checkBtn.textContent = (won && puzzleMode === "daily") ? "Share result" : "Check word";
-    checkBtn.onclick = (won && puzzleMode === "daily") ? (e)=>shareDailyResult(e.currentTarget) : checkWord;
+    checkBtn.textContent = won ? "Show result" : "Check word";
+    checkBtn.onclick = won ? ()=>showModal("win",{closable:true}) : checkWord;
 
     document.getElementById("undoBtn").disabled = !lastMove || !!pendingMatches;
-
-    const main = document.querySelector("main");
-    let banner = document.getElementById("winBanner");
-    if(won){
-      if(!banner){
-        banner = document.createElement("div");
-        banner.id = "winBanner";
-        banner.className = "win-banner";
-        main.insertBefore(banner, main.firstChild);
-      }
-      const usedWild = initialHandSnapshot.some(t=>t.isWild) && !hand.some(t=>t.isWild);
-      banner.textContent = usedWild ? "Board cleared. You solved it." : "Perfect clear!";
-    } else if(banner){
-      banner.remove();
-    }
   }
 
   // Clones the DOM elements of just-eliminated tiles and drops them off the
@@ -1374,18 +1406,46 @@ function attemptEliminate(match){
   // right after <main>). showModal()/closeModal() just decide *which* one is
   // visible; updateModal() below only ever fills in text on elements that
   // already exist — it never builds modal markup.
+  // Sub-modals (rules/stats) can be opened either directly (game screen,
+  // no modal underneath) or from on top of another modal (menu/win). When
+  // opened from on top of one, modalReturnTo remembers it so the sub-modal's
+  // close button goes back there instead of closing everything.
+  let modalReturnTo = null;
+
   function showModal(type, options={}){
-    modalState = {type, closable: options.closable !== false};
+    modalReturnTo = null; // fresh navigation: nothing to return to
+    modalState = {type, closable: options.closable !== false, data: options.data};
+    updateModal();
+  }
+
+  // Like showModal, but remembers whatever modal is currently open so
+  // closeSubModal() can return to it.
+  function showSubModal(type, options={}){
+    modalReturnTo = modalState;
+    modalState = {type, closable: options.closable !== false, data: options.data};
     updateModal();
   }
 
   function closeModal(){
     modalState = null;
+    modalReturnTo = null;
     pendingMatches = null;
     updateModal();
   }
 
-  const MODAL_OVERLAY_IDS = ["matchOverlay","menuOverlay","rulesOverlay","statsOverlay","shareOverlay","installOverlay"];
+  // Used by rules/stats close buttons: goes back to the modal that opened
+  // them (menu or win), or fully closes if there isn't one.
+  function closeSubModal(){
+    if(modalReturnTo){
+      modalState = modalReturnTo;
+      modalReturnTo = null;
+      updateModal();
+    } else {
+      closeModal();
+    }
+  }
+
+  const MODAL_OVERLAY_IDS = ["matchOverlay","menuOverlay","rulesOverlay","statsOverlay","shareOverlay","installOverlay","winOverlay"];
 
   function hideAllModals(){
     for(const id of MODAL_OVERLAY_IDS){
@@ -1430,7 +1490,7 @@ function attemptEliminate(match){
 
     if(modalState.type==="menu"){
       const dailyDone = isDailySolved();
-      document.getElementById("dailyBtn").textContent = dailyDone ? "Share daily result" : "Daily Puzzle";
+      document.getElementById("dailyBtn").textContent = dailyDone ? "Show daily result" : "Daily Puzzle";
       document.getElementById("dailyHint").textContent = dailyDone
         ? (timeUntilNextDaily()+" until the next daily, while you wait...")
         : "Or play a random puzzle";
@@ -1462,6 +1522,21 @@ function attemptEliminate(match){
         chart.style.display = "none";
         emptyMsg.style.display = "";
       }
+    } else if(modalState.type==="win"){
+      const data = modalState.data || {
+        words: eliminatedWords,
+        usedWild: initialHandSnapshot.some(t=>t.isWild) && !hand.some(t=>t.isWild),
+        isDaily: puzzleMode==="daily"
+      };
+      document.getElementById("winTitle").textContent = data.usedWild ? "You solved the Weave!" : "Perfect Weave!";
+      const list = document.getElementById("winWords");
+      list.innerHTML = "";
+      for(const w of data.words){
+        const li = document.createElement("li");
+        li.textContent = w;
+        list.appendChild(li);
+      }
+      document.getElementById("winShareBtn").style.display = data.isDaily ? "" : "none";
     } else if(modalState.type==="share"){
       document.getElementById("shareText").textContent = buildShareText();
     } else if(modalState.type==="install"){
@@ -1792,13 +1867,27 @@ function attemptEliminate(match){
   function saveDailyState(){
     if(puzzleMode!=="daily" || !puzzleDate) return;
     const state=loadDailyState()||{};
-    state[puzzleDate]={won,moveCount,words:eliminatedWords.slice()};
+    const usedWild = initialHandSnapshot.some(t=>t.isWild) && !hand.some(t=>t.isWild);
+    state[puzzleDate]={won,moveCount,words:eliminatedWords.slice(),usedWild};
     localStorage.setItem(DAILY_KEY,JSON.stringify(state));
   }
 
   function isDailySolved(){
     const state=loadDailyState();
     return !!(state && state[localDateKey()] && state[localDateKey()].won);
+  }
+
+  // Opens the win screen for today's already-solved daily, reading the
+  // recap (words + wild usage) back out of storage rather than from live
+  // game state, since the active puzzle may not be today's daily anymore.
+  function openDailyResult(){
+    const rec = (loadDailyState()||{})[localDateKey()];
+    if(!rec) return;
+    showModal("win", {closable:true, data:{
+      words: rec.words || [],
+      usedWild: !!rec.usedWild,
+      isDaily: true
+    }});
   }
 
   function recordDailyWin(){
@@ -1822,12 +1911,22 @@ function attemptEliminate(match){
     generatePuzzle("daily",today);
   }
 
+  function formatShareDate(dateKey){
+    try{
+      const d = new Date(dateKey+"T12:00:00");
+      return d.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+    }catch(e){ return dateKey; }
+  }
+
   function buildShareText(){
+    const dateKey = puzzleDate || localDateKey();
     const words=eliminatedWords.length ? eliminatedWords :
-      ((loadDailyState()||{})[puzzleDate||localDateKey()]||{}).words || [];
-    const moves=moveCount || (((loadDailyState()||{})[puzzleDate||localDateKey()]||{}).moveCount) || 0;
-    return "I solved today's Weaved in "+moves+" moves!\n\n"+
-      words.map(w=>w.charAt(0).toUpperCase()+"#".repeat(Math.max(0,w.length-1))).join("\n");
+      ((loadDailyState()||{})[dateKey]||{}).words || [];
+    const moves=moveCount || (((loadDailyState()||{})[dateKey]||{}).moveCount) || 0;
+    const url = location.origin + location.pathname;
+    return "Weaved — "+formatShareDate(dateKey)+"\nI solved today's puzzle in "+moves+" moves!\n"+
+      words.map(w=>w.charAt(0).toUpperCase()+"#".repeat(Math.max(0,w.length-1))).join("\n")+
+      "\n"+url;
   }
 
   function isMobileDevice(){
@@ -1975,17 +2074,22 @@ function attemptEliminate(match){
   // document.getElementById("invalidOkBtn").addEventListener("click",()=>{ errorMessage=null; render(); });
 
   document.getElementById("menuCloseBtn").addEventListener("click",closeModal);
-  document.getElementById("dailyBtn").addEventListener("click",(e)=> isDailySolved() ? shareDailyResult(e.currentTarget) : startDaily());
+  document.getElementById("dailyBtn").addEventListener("click",()=> isDailySolved() ? openDailyResult() : startDaily());
   document.getElementById("randomBtn").addEventListener("click",()=>{ closeModal(); generatePuzzle("random"); });
-  document.getElementById("menuRulesBtn").addEventListener("click",()=>showModal("rules"));
-  document.getElementById("menuStatsBtn").addEventListener("click",()=>showModal("stats"));
+  document.getElementById("menuRulesBtn").addEventListener("click",()=>showSubModal("rules"));
+  document.getElementById("menuStatsBtn").addEventListener("click",()=>showSubModal("stats"));
   document.getElementById("menuThemeBtn").addEventListener("click",()=>{ toggleTheme(); updateModal(); });
 
-  document.getElementById("rulesCloseBtn").addEventListener("click",closeModal);
-  document.getElementById("statsCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("rulesCloseBtn").addEventListener("click",closeSubModal);
+  document.getElementById("statsCloseBtn").addEventListener("click",closeSubModal);
   document.getElementById("shareCloseBtn").addEventListener("click",closeModal);
   document.getElementById("installCloseBtn").addEventListener("click",closeModal);
   document.getElementById("shareModalBtn").addEventListener("click",(e)=>shareDailyResult(e.currentTarget));
+
+  document.getElementById("winCloseBtn").addEventListener("click",closeModal);
+  document.getElementById("winShareBtn").addEventListener("click",(e)=>shareDailyResult(e.currentTarget));
+  document.getElementById("winStatsBtn").addEventListener("click",()=>showSubModal("stats"));
+  document.getElementById("winMenuBtn").addEventListener("click",openMenu);
 
   // Provide basic web-app metadata dynamically, including a generated icon so
   // supporting browsers can treat Weaved as installable once it's hosted over HTTPS.
