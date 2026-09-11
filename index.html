@@ -258,6 +258,89 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
 .site-footer{ padding: 18px 4px 36px; text-align: center; }
 .site-footer p{ margin: 0; font-size: .82rem; color: var(--text-muted); }
 
+
+   /* forms */
+
+   .form-card {
+  width: min(480px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--panel, #fffdfb);
+  border: 1px solid var(--line, #ddd8e2);
+  border-radius: var(--radius, 13px);
+  box-shadow: var(--shadow, 0 3px 14px rgba(70, 58, 82, .08));
+  font-family: "Manrope", sans-serif;
+}
+
+.form-card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.form-card label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted, #6f7880);
+}
+
+.form-card input,
+.form-card textarea {
+  font: inherit;
+  padding: 10px 12px;
+  background: var(--panel-2, #efebf4);
+  color: var(--ink, #364958);
+  border: 1.5px solid var(--line-dark, #bdb6c4);
+  border-radius: 10px;
+  resize: vertical;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.form-card input:focus,
+.form-card textarea:focus {
+  outline: none;
+  border-color: var(--accent, #8f80c1);
+  background: #fff;
+}
+
+.form-card button[type="submit"] {
+  appearance: none;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  background: var(--panel, #fffdfb);
+  border: 1.5px solid var(--line-dark, #bdb6c4);
+  border-radius: var(--radius, 13px);
+  cursor: pointer;
+  box-shadow: var(--shadow, 0 3px 14px rgba(70, 58, 82, .08));
+  transition: border-color 140ms ease, background-color 140ms ease, transform 100ms ease;
+}
+
+.form-card button[type="submit"]:hover {
+  background: #fff;
+  border-color: #aaa3b1;
+}
+
+.form-card button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+/* Dark mode, if the page toggles data-theme="dark" like your games do */
+:root[data-theme="dark"] .form-card {
+  background: var(--panel, #302d38);
+  border-color: var(--line, #4a4552);
+}
+:root[data-theme="dark"] .form-card input,
+:root[data-theme="dark"] .form-card textarea {
+  background: var(--panel-2, #393540);
+  color: var(--ink, #f2eff7);
+  border-color: var(--line-dark, #625b6a);
+}
+
 /* =========================================================
    Modals
    ========================================================= */
@@ -392,13 +475,32 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
     </button>
     <h2>Contact me</h2>
     <p>Questions, bug reports, or ideas and feedback.</p>
-    <form action="https://api.web3forms.com/submit" method="POST">
-  <input type="hidden" name="access_key" value="8f1c134e-494d-41d9-8d82-986e14f6deec">
-  <input type="text" name="name" required>
-  <input type="email" name="email" required>
-  <textarea name="message" required></textarea>
-  <button type="submit">Submit Form</button>
-</form>
+
+     <!-- start of form -->
+    <div class="form-card">
+  <form action="https://api.web3forms.com/submit" method="POST">
+    <input type="hidden" name="access_key" value="8f1c134e-494d-41d9-8d82-986e14f6deec">
+
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
+    </div>
+
+    <button type="submit">Submit Form</button>
+  </form>
+
+       <!-- end of form -->
+</div>
   </dialog>
 
 <script>
