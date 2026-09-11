@@ -264,11 +264,8 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
    .form-card {
   width: min(480px, 100%);
   margin: 0 auto;
-  padding: 24px;
-  background: var(--panel, #fffdfb);
-  border: 1px solid var(--line, #ddd8e2);
-  border-radius: var(--radius, 13px);
-  box-shadow: var(--shadow, 0 3px 14px rgba(70, 58, 82, .08));
+  padding: 12px;
+  background: var(--surface, #fffdfb);
   font-family: "Manrope", sans-serif;
 }
 
@@ -289,9 +286,9 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
 .form-card textarea {
   font: inherit;
   padding: 10px 12px;
-  background: var(--panel-2, #efebf4);
-  color: var(--ink, #364958);
-  border: 1.5px solid var(--line-dark, #bdb6c4);
+  background: var(--header-bg, #efebf4);
+  color: var(--text, #364958);
+  border: 1.5px solid var(--outline, #bdb6c4);
   border-radius: 10px;
   resize: vertical;
   transition: border-color 140ms ease, background-color 140ms ease;
@@ -312,8 +309,8 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
   font: inherit;
   font-weight: 700;
   color: inherit;
-  background: var(--panel, #fffdfb);
-  border: 1.5px solid var(--line-dark, #bdb6c4);
+  background: var(--bg, #fffdfb);
+  border: 1.5px solid var(--outline, #bdb6c4);
   border-radius: var(--radius, 13px);
   cursor: pointer;
   box-shadow: var(--shadow, 0 3px 14px rgba(70, 58, 82, .08));
@@ -321,7 +318,7 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
 }
 
 .form-card button[type="submit"]:hover {
-  background: #fff;
+  background: var(--accent);
   border-color: #aaa3b1;
 }
 
@@ -330,16 +327,6 @@ main{ max-width: 480px; margin: 0 auto; padding: 0 20px; }
 }
 
 /* Dark mode, if the page toggles data-theme="dark" like your games do */
-:root[data-theme="dark"] .form-card {
-  background: var(--panel, #302d38);
-  border-color: var(--line, #4a4552);
-}
-:root[data-theme="dark"] .form-card input,
-:root[data-theme="dark"] .form-card textarea {
-  background: var(--panel-2, #393540);
-  color: var(--ink, #f2eff7);
-  border-color: var(--line-dark, #625b6a);
-}
 
 /* =========================================================
    Modals
