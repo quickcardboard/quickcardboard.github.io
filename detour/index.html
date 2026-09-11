@@ -1849,24 +1849,24 @@ setInterval(refreshMenuSub, 30000);
 //   state.isTestSolve=true;
 //   state.solving=true;
 
-  // Reverse the exact shuffle. This never removes a tile and guarantees that
-  // the board returns to the known-valid solution produced by generatePuzzle().
-  for(let i=state.shuffleLog.length-1; i>=0; i--){
-    const [from, to] = state.shuffleLog[i];
-    // After reversing later moves, the blank is at `to` and the tile that was
-    // moved during the shuffle is at `from`.
-    applyRawSwap(to, from);
-    state.blank=from;
-  }
+//   // Reverse the exact shuffle. This never removes a tile and guarantees that
+//   // the board returns to the known-valid solution produced by generatePuzzle().
+//   for(let i=state.shuffleLog.length-1; i>=0; i--){
+//     const [from, to] = state.shuffleLog[i];
+//     // After reversing later moves, the blank is at `to` and the tile that was
+//     // moved during the shuffle is at `from`.
+//     applyRawSwap(to, from);
+//     state.blank=from;
+//   }
 
-  state.moveLog=[];
-  state.moveCount=0;
-  document.getElementById('moveCount').textContent='0';
-  buildBoardDOM();
-  renderSlidableHints();
-  state.solving=false;
-  checkWin();
-});
+//   state.moveLog=[];
+//   state.moveCount=0;
+//   document.getElementById('moveCount').textContent='0';
+//   buildBoardDOM();
+//   renderSlidableHints();
+//   state.solving=false;
+//   checkWin();
+// });
 
 /* Random puzzle — always 8–10 shuffles. */
 document.getElementById('randomBtn').addEventListener('click', ()=>{
