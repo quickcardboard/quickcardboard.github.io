@@ -182,9 +182,12 @@ h4 {
       justify-content: center;
       padding: 0;
     }
-    #installBtn svg {
-    width: 20px !important;
-      height: 20px !important;
+#installBtn svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;    /* Breaks out of inline-flex restrictions */
+  flex-shrink: 0 !important;    /* Prevents flexbox from squishing the width */
+  flex-grow: 0 !important;      /* Prevents flexbox from expanding it */
 }
     #rulesBtn {
       width:60px;
