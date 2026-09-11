@@ -8,6 +8,8 @@
   <link rel="icon" type="image/svg+xml" href="codefour-logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -1030,7 +1032,13 @@ h4 {
     <header>
       <div class="brand"><img class="brand-logo" src="codefour-logo.svg" alt="" aria-hidden="true">CODEFOUR</div>
       <div class="header-actions">
-
+        <button class="icon-btn header-btn" id="installBtn" type="button" aria-label="Add to homescreen" title="Add to homescreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v13"></path>
+              <path d="M7 11l5 5 5-5"></path>
+              <path d="M5 21h14"></path>
+            </svg>
+          </button>
         <button class="icon-btn" id="rulesBtn" aria-label="Rules">Rules</button>
       </div>
     </header>
@@ -1895,6 +1903,36 @@ h4 {
     setInterval(() => {updateMenuDaily(); tickMenuCountdown();}, 1000);
     state.hasGame = false;
     openModal("menuModal");
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  });
+}
+
+// PWA install prompt handling
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.style.display = 'flex'; // matches .icon-btn's display:flex
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  installBtn.style.display = 'none';
+});
+
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none';
+  deferredInstallPrompt = null;
+});
   </script>
 </body>
 
