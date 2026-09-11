@@ -1843,11 +1843,11 @@ function refreshDailyButton(){
 }
 setInterval(refreshMenuSub, 30000);
 
-/* TEST ONLY: remove this listener with the Solve button before publishing. */
-document.getElementById('solveBtn').addEventListener('click', ()=>{
-  if(state.wonThisRound || state.solving) return;
-  state.isTestSolve=true;
-  state.solving=true;
+// /* TEST ONLY: remove this listener with the Solve button before publishing. */
+// document.getElementById('solveBtn').addEventListener('click', ()=>{
+//   if(state.wonThisRound || state.solving) return;
+//   state.isTestSolve=true;
+//   state.solving=true;
 
   // Reverse the exact shuffle. This never removes a tile and guarantees that
   // the board returns to the known-valid solution produced by generatePuzzle().
