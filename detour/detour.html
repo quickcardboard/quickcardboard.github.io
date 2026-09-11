@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>Detour</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20aria-hidden%3D%22true%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2260%22%20height%3D%2260%22%20rx%3D%2213%22%20fill%3D%22%23303339%22%2F%3E%3Cpath%20d%3D%22M32%205%20V32%22%20stroke%3D%22%235B8DEE%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M59%2032%20H32%22%20stroke%3D%22%23F0A53F%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M32%2032%20V59%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M5%2032%20H32%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%227%22%20fill%3D%22%234A4B50%22%2F%3E%3C%2Fsvg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Detour">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#202124">
+
+  <style>
+    :root {
+      --bg: #202124;
+      --panel: #2A2C31;
+      --surface: #303339;
+      --ink: #F2F3F5;
+      --ink-soft: #9AA0AC;
+      --line: #3D4048;
+      --line-soft: #34363C;
+      --overlay: rgba(0, 0, 0, 0.6);
+      --shadow: rgba(0, 0, 0, 0.5);
+      --error: #FF5C5C;
+
+      --c1: #1B998B;
+      --c1-ink: #FFFFFF;
+      --c2: #F2B705;
+      --c2-ink: #3A2E00;
+      --c3: #6A4C93;
+      --c3-ink: #FFFFFF;
+
+      /* Detour's original dark-mode road palette */
+      --car1: #5B8DEE;
+      --car2: #F0A53F;
+      --car1-ink: #FFFFFF;
+      --car2-ink: #2B1900;
+      --mixed: #C9CACF;
+      --road-neutral: #6B6D74;
+      --hub: #4A4B50;
+
+      --radius: 6px;
+      --gap: 6px;
+      --menu-btn-height: 54px;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #F3F4F5;
+      --panel: #E0E0E0;
+      --surface: #D4D6D9;
+      --ink: #2B2D30;
+      --ink-soft: #62666D;
+      --line: #A8ABB0;
+      --line-soft: #C3C5C9;
+      --overlay: rgba(35, 37, 40, 0.38);
+      --shadow: rgba(35, 37, 40, 0.22);
+      --error: #E08A2E;
+
+      --c1: #6DB8C5;
+      --c1-ink: #15343A;
+      --c2: #ABE166;
+      --c2-ink: #26352A;
+      --c3: #CE5374;
+      --c3-ink: #FFFFFF;
+
+      /* Light-mode palette: retain Detour's blue, orange and white roads */
+      --car1: #5B8DEE;
+      --car2: #F0A53F;
+      --mixed: #FFFFFF;
+      --road-neutral: #8F9298;
+      --hub: #B8BBC0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 48px;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 2.0rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      display: block;
+    }
+
+    .menu-logo {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      display: block;
+    }
+
+    .icon-btn {
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 140ms ease, background-color 140ms ease;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-btn {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #rulesBtn.header-btn {
+      padding: 0 16px;
+    }
+
+    #addHomeBtn.header-btn {
+      width: 42px;
+      flex: 0 0 42px;
+      padding: 0;
+    }
+
+    #addHomeBtn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    /* ---------- Detour board ---------- */
+    .board-outer {
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: .62fr repeat(4, 1fr) .62fr;
+      grid-template-rows: .62fr repeat(4, 1fr) .62fr;
+      gap: 4px;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 10px;
+      box-shadow: 0 8px 24px var(--shadow);
+      border: 1px solid var(--line);
+      position: relative;
+    }
+
+    .tile-layer {
+      grid-row: 2 / 6;
+      grid-column: 2 / 6;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 9px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .tile {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25%;
+      height: 25%;
+      padding: 2px;
+      transition: transform .32s cubic-bezier(.2, .7, .3, 1);
+      will-change: transform;
+      cursor: default;
+      z-index: 1;
+    }
+
+    .tile-layer.no-anim .tile,
+    .tile-layer.no-anim .car-dot {
+      transition: none !important;
+    }
+
+    .tile-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      transition: background .12s ease, box-shadow .2s ease;
+    }
+
+    .tile.slidable {
+      cursor: pointer;
+    }
+
+    .tile.slidable .tile-inner:hover {
+      background: var(--surface);
+    }
+
+    .tile.slidable:active .tile-inner {
+      transform: scale(.93);
+    }
+
+    .tile-inner svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .tile-inner.passing-car1 {
+      box-shadow: inset 0 0 0 3px var(--car1);
+    }
+
+    .tile-inner.passing-car2 {
+      box-shadow: inset 0 0 0 3px var(--car2);
+    }
+
+    .car-dot {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25%;
+      height: 25%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .5s ease;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .car-dot span {
+      width: 36%;
+      height: 36%;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .4), 0 0 0 2px rgba(0, 0, 0, .15);
+    }
+
+    .car-dot.car1 span {
+      background: var(--car1);
+    }
+
+    .car-dot.car2 span {
+      background: var(--car2);
+    }
+
+    .marker {
+      grid-row: var(--r);
+      grid-column: var(--c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: visible;
+      z-index: 4;
+    }
+
+    .marker.car1 {
+      color: var(--car1);
+    }
+
+    .marker.car2 {
+      color: var(--car2);
+    }
+
+    /* Explicit child stub: it is independent of the badge and always extends
+       from the marker cell toward the board.  It is deliberately behind the
+       badge but above the board/background layers. */
+    .marker-stub {
+      position: absolute;
+      z-index: 0;
+      background: currentColor;
+      border-radius: 3px;
+      opacity: .98;
+      pointer-events: none;
+    }
+
+    .marker.side-N .marker-stub {
+      width: 30%;
+      height: calc(50% + 4px);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, 0);
+    }
+
+    .marker.side-S .marker-stub {
+      width: 30%;
+      height: calc(50% + 4px);
+      left: 50%;
+      bottom: 50%;
+      transform: translate(-50%, 0);
+    }
+
+    .marker.side-W .marker-stub {
+      width: calc(50% + 4px);
+      height: 30%;
+      left: 50%;
+      top: 50%;
+      transform: translate(0, -50%);
+    }
+
+    .marker.side-E .marker-stub {
+      width: calc(50% + 4px);
+      height: 30%;
+      right: 50%;
+      top: 50%;
+      transform: translate(0, -50%);
+    }
+
+    .marker-badge {
+      position: relative;
+      z-index: 2;
+      width: 74%;
+      height: 74%;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      border: 2px solid transparent;
+      background: var(--surface);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .marker-badge {
+      position: relative;
+      z-index: 2;
+      width: 74%;
+      height: 74%;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      border: 2px solid transparent;
+      background: var(--surface);
+    }
+
+    .marker-badge.car1 {
+      color: var(--car1);
+      border-color: var(--car1);
+      background: color-mix(in srgb, var(--surface) 84%, var(--car1) 16%);
+    }
+
+    .marker-badge.car2 {
+      color: var(--car2);
+      border-color: var(--car2);
+      background: color-mix(in srgb, var(--surface) 84%, var(--car2) 16%);
+    }
+
+    .marker-badge.pass .marker-icon {
+      width: 56%;
+      height: 56%;
+      display: block;
+      color: inherit;
+      fill: currentColor;
+    }
+
+    .marker-badge.finish .marker-icon {
+      width: 58%;
+      height: 58%;
+      display: block;
+      color: inherit;
+      fill: currentColor;
+    }
+
+    .status-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .pill {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+
+    .pill b {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    /* Action & Menu Button Styling */
+    .actions {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    button.btn {
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 16px;
+      border-radius: 13px;
+      cursor: pointer;
+      flex: 1 1 auto;
+      min-height: 54px;
+      transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+      user-select: none;
+    }
+
+    button.btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    button.btn.icon-only {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 54px;
+    }
+
+    button.btn.icon-only svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .game-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 54px 54px;
+      align-items: center;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .game-controls .btn.icon-only {
+      width: 54px;
+      height: 54px;
+      padding: 0;
+      flex: none;
+    }
+
+    .game-controls .hold-reset {
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .game-controls .hold-reset::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--c1);
+      opacity: 0;
+      transform: scaleX(var(--hold-progress, 0));
+      transform-origin: left center;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .game-controls .hold-reset.holding::after {
+      opacity: .18;
+    }
+
+    .move-counter {
+      min-height: 54px;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--ink-soft);
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    .move-counter b {
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    /* Modal Chrome UI */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .modal p {
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .hub-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-decoration: none;
+    }
+
+    .hub-link:hover {
+      color: var(--ink);
+      text-decoration: underline;
+    }
+
+    .icon-btn-round {
+      appearance: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .daily-btn {
+      width: 100%;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-radius: 13px;
+      border: 1.5px solid var(--ink);
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .menu-sub {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin: 6px 0 10px;
+      text-align: center;
+    }
+
+    .menu-tools {
+      display: flex;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .menu-tools .icon-btn {
+      flex: 1;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .difficulty {
+      display: flex;
+      gap: 6px;
+    }
+
+    .diff-btn {
+      flex: 1;
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.85rem;
+      font-weight: 600;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .diff-btn.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+
+    .share-card {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--panel);
+    }
+
+    .brand-tag {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0 0 8px;
+    }
+
+    .score-block {
+      text-align: center;
+      margin: 4px 0 16px;
+      padding: 16px;
+      background: var(--car1);
+      border: 1.5px solid var(--car1);
+      border-radius: 14px;
+    }
+
+    .score-label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--car1-ink);
+      opacity: .8;
+      margin-bottom: 4px;
+    }
+
+    .score-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--car1-ink);
+    }
+
+    .time-taken {
+      background: var(--car2);
+      border: 1px solid var(--car2);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      margin: 0 0 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .time-taken .stat-label,
+    .time-taken .stat-value {
+      color: var(--car2-ink);
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--ink);
+      margin-top: auto;
+    }
+
+    .win-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 14px 0 4px;
+    }
+
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+    }
+
+    .stats-row .stat-label {
+      margin: 0;
+    }
+
+    .stats-row .stat-value {
+      font-size: 1.1rem;
+      margin-top: 0;
+    }
+
+    .rules-icon {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      vertical-align: middle;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid currentColor;
+      border-radius: 7px;
+      margin: 0 2px;
+      color: var(--car1);
+    }
+
+    .rules-icon svg {
+      width: 68%;
+      height: 68%;
+      display: block;
+      fill: currentColor;
+    }
+
+    .rules-start {
+      font-size: 14px;
+      line-height: 1;
+      transform: translateX(1px);
+    }
+
+    .rules-tile {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      vertical-align: middle;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: #fff;
+      margin: 0 2px;
+    }
+
+    .rules-tile svg {
+      width: 70%;
+      height: 70%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game">
+    <header>
+      <div class="header-top">
+        <h1>
+          <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="2" y="2" width="60" height="60" rx="13" fill="#303339" />
+            <path d="M32 5 V32" stroke="#5B8DEE" stroke-width="10" stroke-linecap="round" />
+            <path d="M59 32 H32" stroke="#F0A53F" stroke-width="10" stroke-linecap="round" />
+            <path d="M32 32 V59" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" />
+            <path d="M5 32 H32" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" />
+            <circle cx="32" cy="32" r="7" fill="#4A4B50" />
+          </svg>
+          <span>Detour</span>
+        </h1>
+        <div class="header-actions">
+          <button class="icon-btn header-btn" id="addHomeBtn" type="button" aria-label="Add to homescreen" title="Add Detour to your home screen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/>
+            </svg>
+          </button>
+          <button class="icon-btn header-btn" id="rulesBtn" type="button">Rules</button>
+        </div>
+      </div>
+    </header>
+
+
+    <div id="board" class="board-outer" aria-label="Detour puzzle board"></div>
+
+    <div class="actions game-controls">
+      <div class="move-counter" aria-label="Moves">
+        <span>Moves</span><b id="moveCount">0</b>
+      </div>
+      <div class="move-counter" id="timeBlock" aria-label="Time">
+        <span>Time</span><b id="timeDisplay">0:00</b>
+      </div>
+      <button class="btn icon-only hold-reset" id="resetHoldBtn" type="button" aria-label="Hold to reset current puzzle" title="Hold to reset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 11A8 8 0 1 0 18.5 16"></path>
+          <polyline points="20 4 20 11 13 11"></polyline>
+        </svg>
+      </button>
+      <button class="btn icon-only" id="menuToggleBtn" type="button" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+          <line x1="4" y1="7" x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
+    </div>
+
+
+  </div>
+
+  <!-- MENU MODAL -->
+  <div class="modal-overlay" id="menuOverlay">
+    <div class="modal">
+      <div class="menu-header">
+        <h2 style="display:flex;align-items:center;gap:8px;margin:0;"><svg class="menu-logo"
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="2" y="2" width="60" height="60" rx="13" fill="#303339" />
+            <path d="M32 5 V32" stroke="#5B8DEE" stroke-width="10" stroke-linecap="round" />
+            <path d="M59 32 H32" stroke="#F0A53F" stroke-width="10" stroke-linecap="round" />
+            <path d="M32 32 V59" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" />
+            <path d="M5 32 H32" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" />
+            <circle cx="32" cy="32" r="7" fill="#4A4B50" />
+          </svg><span>Detour</span></h2>
+        <button class="icon-btn-round" id="menuCloseBtn" type="button" hidden>&times;</button>
+      </div>
+      <button class="daily-btn" id="dailyBtn" type="button">Daily Puzzle</button>
+      <p class="menu-sub" id="menuSub"></p>
+      <button class="daily-btn" id="randomBtn" type="button">Random Puzzle</button>
+      <div class="menu-tools">
+        <!-- TEST ONLY: remove this button and its event listener before publishing.
+        <button class="icon-btn" id="solveBtn" type="button">Solve</button> -->
+        <button class="icon-btn" id="menuRulesBtn" type="button">Rules</button>
+        <button class="icon-btn" id="menuStatsBtn" type="button">Statistics</button>
+        <button class="icon-btn theme-toggle" id="themeToggleBtn" type="button">Light mode</button>
+      </div>
+      <a class="hub-link" href="https://quickcardboard.com">← Back to QuickCardboard</a>
+    </div>
+  </div>
+
+  <!-- RULES MODAL -->
+  <div class="modal-overlay" id="rulesOverlay">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>How to play</h2>
+        <button class="icon-btn-round" id="rulesCloseBtn" type="button">&times;</button>
+      </div>
+
+      <p>Slide the tiles into place so the car can go from
+        <span class="rules-icon car1"><span class="rules-start">▶</span></span> to
+        <span class="rules-icon car1"><svg viewBox="0 0 1920 1920" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M168.941-.011v1920H56v-1920h112.941Zm112.941 68.453c308.669-81.656 496.15 26.429 677.196 133.045 203.407 119.944 413.59 244.066 833.844 139.03 20.217-4.969 41.676 1.469 55.793 17.168 13.892 15.699 18.07 37.835 10.843 57.487-203.407 542.343-504.17 552.734-794.993 562.786-223.285 7.906-454.25 15.811-686.344 247.906l-96.339 96.338Z"/></svg></span>,
+        while passing next to the
+        <span class="rules-icon car1"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>.
+      </p>
+      <p>Cars must travel on their own roads, but white
+        <span class="rules-tile"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8V92" stroke="currentColor" stroke-width="18" stroke-linecap="round"/></svg></span>
+        roads can be shared.</p>
+      <p>Cars may turn or go straight at junctions, but must remain on a valid road.</p>
+
+
+    </div>
+  </div>
+
+  <!-- WIN MODAL -->
+  <div class="modal-overlay" id="winOverlay">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>Solved!</h2>
+        <button class="icon-btn-round" id="winCloseBtn" type="button">&times;</button>
+      </div>
+      <div id="winCard" class="share-card">
+        <span class="brand-tag">Detour</span>
+        <div class="score-block">
+          <span class="score-label">Moves</span>
+          <span class="score-value" id="winScore">0</span>
+        </div>
+        <div class="time-taken">
+          <span class="stat-label">Time taken</span>
+          <span class="stat-value" id="winTime">–</span>
+        </div>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="shareBtn" type="button">Share</button>
+        <button class="btn" id="winNewBtn" type="button">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS MODAL -->
+  <div class="modal-overlay" id="statsOverlay">
+    <div class="modal">
+      <div id="statsCard" class="share-card">
+        <span class="brand-tag">Detour</span>
+        <h2>Statistics</h2>
+        <div class="stats-list">
+          <div class="stats-row">
+            <span class="stat-label">Daily puzzles solved</span><span class="stat-value" id="statsTotal">0</span></div>
+          <div class="stats-row">
+            <span class="stat-label">Average moves</span><span class="stat-value" id="statsAverage">0</span></div>
+          <div class="stats-row">
+            <span class="stat-label">Current streak</span><span class="stat-value" id="statsStreak">0</span></div>
+          <div class="stats-row">
+            <span class="stat-label">Average time</span><span class="stat-value" id="statsAvgTime">–</span></div>
+          <div class="stats-row">
+            <span class="stat-label">Best time</span><span class="stat-value" id="statsBestTime">–</span></div>
+        </div>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="statsShareBtn" type="button">Share</button>
+        <button class="btn" id="statsBackBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      const GAME_KEY = 'detour';
+      function storageGet(k){ try{return localStorage.getItem(`${GAME_KEY}-${k}`);}catch(e){return null;} }
+      function storageSet(k,v){ try{localStorage.setItem(`${GAME_KEY}-${k}`,v);}catch(e){} }
+      let randomFn = Math.random;
+      function rand(){ return randomFn(); }
+      function seededRandom(seed){
+        let x = 0;
+        for(let i=0;i<seed.length;i++) x = (x * 31 + seed.charCodeAt(i)) >>> 0;
+        if(!x) x = 0x9E3779B9;
+        return function(){
+          x ^= x << 13; x >>>= 0;
+          x ^= x >>> 17; x >>>= 0;
+          x ^= x << 5; x >>>= 0;
+          return x / 4294967296;
+        };
+      }
+      function todayKey(){
+        const d=new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      function dailyUrl(date){
+        const u=new URL(window.location.href);
+        u.searchParams.set('daily',date);
+        u.hash='';
+        return u.toString();
+      }
+
+
+
+/* =========================================================
+   Geometry helpers
+========================================================= */
+const DIRS = ['N','E','S','W'];
+const DELTA = { N:[-1,0], E:[0,1], S:[1,0], W:[0,-1] };
+const OPP = { N:'S', S:'N', E:'W', W:'E' };
+const SIZE = 4;
+
+function idx(r,c){ return r*SIZE+c; }
+function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(rand()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function cellKey(r,c){ return r+','+c; }
+function pairKey(pair){ return pair.slice().sort().join(''); }
+function isOpposite(pair){
+  const k = pairKey(pair);
+  return k === pairKey(['N','S']) || k === pairKey(['E','W']);
+}
+function dirFromTo(a,b){
+  for(const d of DIRS){
+    const [dr,dc] = DELTA[d];
+    if(a.r+dr===b.r && a.c+dc===b.c) return d;
+  }
+  throw new Error('cells not adjacent');
+}
+
+function edgePoints(){
+  return [
+    {r:0,c:1,side:'N'}, {r:0,c:2,side:'N'},
+    {r:3,c:1,side:'S'}, {r:3,c:2,side:'S'},
+    {r:1,c:0,side:'W'}, {r:2,c:0,side:'W'},
+    {r:1,c:3,side:'E'}, {r:2,c:3,side:'E'},
+  ];
+}
+
+function findPath(start,target,passable,usedInit){
+  const visited = new Set(usedInit);
+  visited.add(cellKey(start.r,start.c));
+  const path = [start];
+  function dfs(cur){
+    if(cur.r===target.r && cur.c===target.c) return true;
+    let neighbors = shuffle(DIRS).map(d=>{
+      const [dr,dc]=DELTA[d];
+      return {r:cur.r+dr, c:cur.c+dc};
+    }).filter(n=> inBounds(n.r,n.c) && passable.has(cellKey(n.r,n.c)) && !visited.has(cellKey(n.r,n.c)));
+    neighbors.sort((a,b)=>{
+      const da = Math.abs(a.r-target.r)+Math.abs(a.c-target.c);
+      const db = Math.abs(b.r-target.r)+Math.abs(b.c-target.c);
+      return (da-db) + (rand()-0.5)*3;
+    });
+    for(const n of neighbors){
+      visited.add(cellKey(n.r,n.c));
+      path.push({r:n.r,c:n.c});
+      if(dfs(n)) return true;
+      path.pop();
+      visited.delete(cellKey(n.r,n.c));
+    }
+    return false;
+  }
+  return dfs(start) ? path : null;
+}
+
+function buildCarPath(startPt,passPt,finishPt,passable){
+  const leg1 = findPath({r:startPt.r,c:startPt.c},{r:passPt.r,c:passPt.c},passable,new Set());
+  if(!leg1) return null;
+  const used = new Set(leg1.map(p=>cellKey(p.r,p.c)));
+  used.delete(cellKey(passPt.r,passPt.c));
+  const leg2 = findPath({r:passPt.r,c:passPt.c},{r:finishPt.r,c:finishPt.c},passable,used);
+  if(!leg2) return null;
+  return leg1.concat(leg2.slice(1));
+}
+
+function computeSegments(path,startSide,finishSide){
+  const L = path.length, segs = [];
+  for(let i=0;i<L;i++){
+    let entryDir, exitDir;
+    entryDir = i===0 ? startSide : OPP[dirFromTo(path[i-1],path[i])];
+    exitDir = i===L-1 ? finishSide : dirFromTo(path[i],path[i+1]);
+    segs.push({ cell:path[i], entryDir, exitDir, t:i });
+  }
+  return segs;
+}
+
+
+/* ---- decoy-friendly filler tiles: colored like a real route, but meaningless ---- */
+function randomCarColor(){
+  // Every road lane is intentionally tinted: Car A, Car B, or BOTH.
+  // There are no neutral/gray road lanes.
+  const r = rand();
+  if(r<0.34) return 'car1';
+  if(r<0.68) return 'car2';
+  return 'mixed';
+}
+function colorMapFor(pairs){
+  const colors = {};
+  pairs.forEach(p=>{ colors[pairKey(p)] = randomCarColor(); });
+  return colors;
+}
+function randomTile(){
+  const r = rand();
+  const type = r<0.32 ? 'straight' : r<0.72 ? 'curve' : r<0.88 ? 'plus' : 'double';
+  if(type==='straight'){
+    const pairs = [ rand()<0.5?['N','S']:['E','W'] ];
+    return { type, pairs, colors: colorMapFor(pairs) };
+  }
+  if(type==='curve'){
+    const opts=[['N','E'],['E','S'],['S','W'],['W','N']];
+    const pairs = [ opts[Math.floor(rand()*4)] ];
+    return { type, pairs, colors: colorMapFor(pairs) };
+  }
+  if(type==='plus'){
+    const colors = {};
+    ['N','E','S','W'].forEach(d=>{ colors[d] = randomCarColor(); });
+    return { type, pairs:[['N','S'],['E','W']], colors };
+  }
+  const pairs = rand()<0.5 ? [['N','E'],['S','W']] : [['N','W'],['S','E']];
+  return { type, pairs, colors: colorMapFor(pairs) };
+}
+
+function pairToTile(pair,entries){
+  const car = entries.length===1 ? entries[0].car : (entries[0].car===entries[1].car ? entries[0].car : 'mixed');
+  if(isOpposite(pair)) return { type:'straight', pairs:[pair], colors:{ [pairKey(pair)]:car } };
+  return { type:'curve', pairs:[pair], colors:{ [pairKey(pair)]:car } };
+}
+
+function sideColorsForPlus(entries){
+  // Color every arm of a junction, including arms that are not part of
+  // either generated solution. Unused arms are still decoys: Car A, Car B,
+  // or BOTH. Route arms are then overwritten with their actual route color.
+  const colors = {};
+  for(const d of DIRS) colors[d] = randomCarColor();
+
+  for(const e of entries) for(const d of e.pair){
+    if(colors[d] && colors[d]!==e.car && colors[d]!=='mixed') colors[d]='mixed';
+    else colors[d]=e.car;
+  }
+  return colors;
+}
+
+function resolveTile(entries){
+  if(entries.length===1) return pairToTile(entries[0].pair, entries);
+  const [a,b] = entries;
+  const ka=pairKey(a.pair), kb=pairKey(b.pair);
+  if(ka===kb) return pairToTile(a.pair, entries);
+  const union = new Set([...a.pair, ...b.pair]);
+  if(union.size===3) return { type:'plus', pairs:[['N','S'],['E','W']], colors: sideColorsForPlus(entries) };
+  if(union.size===4){
+    if(isOpposite(a.pair) && isOpposite(b.pair)) return { type:'plus', pairs:[['N','S'],['E','W']], colors: sideColorsForPlus(entries) };
+    return { type:'double', pairs:[a.pair,b.pair], colors:{ [ka]:a.car, [kb]:b.car } };
+  }
+  return null;
+}
+
+function generatePuzzle(attempt){
+  attempt = attempt||0;
+  if(attempt>500) throw new Error('generation failed');
+
+  const pts = shuffle(edgePoints());
+  const [s1,p1,f1,s2,p2,f2] = pts.slice(0,6);
+
+  const innerCells = [{r:1,c:1},{r:1,c:2},{r:2,c:1},{r:2,c:2}];
+  const reserved = innerCells[Math.floor(rand()*4)];
+
+  const passable = new Set();
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(r===reserved.r && c===reserved.c) continue;
+    passable.add(cellKey(r,c));
+  }
+
+  const path1 = buildCarPath(s1,p1,f1,passable);
+  const path2 = buildCarPath(s2,p2,f2,passable);
+  if(!path1 || !path2) return generatePuzzle(attempt+1);
+
+  const segs1 = computeSegments(path1, s1.side, f1.side);
+  const segs2 = computeSegments(path2, s2.side, f2.side);
+
+  const byCell = new Map();
+  for(const s of segs1){
+    const k = cellKey(s.cell.r,s.cell.c);
+    if(!byCell.has(k)) byCell.set(k,[]);
+    byCell.get(k).push({ car:'car1', pair:[s.entryDir,s.exitDir] });
+  }
+  for(const s of segs2){
+    const k = cellKey(s.cell.r,s.cell.c);
+    if(!byCell.has(k)) byCell.set(k,[]);
+    byCell.get(k).push({ car:'car2', pair:[s.entryDir,s.exitDir] });
+  }
+
+  const board = new Array(16).fill(null);
+  for(const [k,entries] of byCell){
+    const [r,c] = k.split(',').map(Number);
+    const tile = resolveTile(entries);
+    if(!tile) return generatePuzzle(attempt+1);
+    board[idx(r,c)] = tile;
+  }
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(r===reserved.r && c===reserved.c) continue;
+    if(!board[idx(r,c)]) board[idx(r,c)] = randomTile();
+  }
+
+  const markers = {
+    car1:{start:s1,passenger:p1,finish:f1},
+    car2:{start:s2,passenger:p2,finish:f2}
+  };
+
+  // Every generated puzzle must contain meaningful route complexity.
+  // A junction and a double-curve are mandatory; otherwise a board made mostly
+  // from single roads can be solved too easily.
+  const hasJunction = board.some(tile => tile && tile.type === 'plus');
+  const hasDoubleCurve = board.some(tile => tile && tile.type === 'double');
+  if(!hasJunction || !hasDoubleCurve) return generatePuzzle(attempt+1);
+
+  // Final gate: validate the actual tile board, not just the paths used to
+  // construct it. Cars may share tiles; collision handling is intentionally
+  // not part of generation or the win condition.
+  const valid1 = findWinningCarPath(board, markers.car1, 'car1');
+  const valid2 = findWinningCarPath(board, markers.car2, 'car2');
+  if(!valid1 || !valid2) return generatePuzzle(attempt+1);
+
+  return {
+    board, reserved,
+    markers,
+    segs: { car1: valid1, car2: valid2 },
+  };
+}
+
+/* =========================================================
+   Game state
+========================================================= */
+const state = {
+  board: [], solvedBoard: [], initialBoard: [], blank: -1, initialBlank: -1, divByIndex: new Array(16).fill(null),
+  markers: null, segs: null, moveLog: [], shuffleLog: [], moveCount: 0,
+  solving: false, wonThisRound: false, mode:'random', dailyDate:null, isTestSolve:false, startTime:0, elapsedMs:0,
+};
+let dailyResults = {};
+try { dailyResults = JSON.parse(storageGet('dailyResults') || '{}') || {}; } catch(e) { dailyResults = {}; }
+let dailyStats = { solved:0, totalMoves:0, totalTimeMs:0, bestTimeMs:null, currentStreak:0 };
+function rebuildDailyStats(){
+  const dates=Object.keys(dailyResults).sort();
+  dailyStats.solved=dates.length;
+  dailyStats.totalMoves=dates.reduce((n,d)=>n+(Number(dailyResults[d].moves)||0),0);
+  dailyStats.totalTimeMs=dates.reduce((n,d)=>n+(Number(dailyResults[d].timeMs)||0),0);
+  dailyStats.bestTimeMs=dates.reduce((best,d)=>{
+    const t=Number(dailyResults[d].timeMs);
+    if(!Number.isFinite(t) || t<=0) return best;
+    return best===null ? t : Math.min(best,t);
+  },null);
+  const t=todayKey();
+  let anchor=new Date(`${t}T00:00:00`);
+  if(!dailyResults[t]) anchor=new Date(anchor.getTime()-86400000);
+  let run=0;
+  for(let i=0;i<dates.length;i++){
+    const d=dates[dates.length-1-i], cur=new Date(`${d}T00:00:00`);
+    const diff=Math.round((anchor-cur)/86400000);
+    if(diff===i) run++; else break;
+  }
+  dailyStats.currentStreak=run;
+}
+rebuildDailyStats();
+
+/* =========================================================
+   Tile rendering (SVG content is fixed per physical tile piece)
+========================================================= */
+function tileSVG(tile){
+  const SW = 22;
+  const P = { N:[50,0], E:[100,50], S:[50,100], W:[0,50] };
+  const colorFor = car => car==='car1' ? 'var(--car1)' : car==='car2' ? 'var(--car2)' : car==='mixed' ? 'var(--mixed)' : 'var(--road-neutral)';
+  let out = '';
+  if(tile.type==='plus'){
+    for(const d of ['N','E','S','W']){
+      const col = colorFor(tile.colors && tile.colors[d]);
+      out += `<line x1="${P[d][0]}" y1="${P[d][1]}" x2="50" y2="50" stroke="${col}" stroke-width="${SW}" stroke-linecap="round"/>`;
+    }
+    out += `<circle cx="50" cy="50" r="14" fill="var(--hub)"/>`;
+  } else if(tile.type==='double'){
+    const corner = pair=>{
+      const s = new Set(pair);
+      if(s.has('N')&&s.has('E')) return [76,24];
+      if(s.has('N')&&s.has('W')) return [24,24];
+      if(s.has('S')&&s.has('E')) return [76,76];
+      return [24,76];
+    };
+    tile.pairs.forEach(pair=>{
+      const key = pairKey(pair);
+      const col = colorFor(tile.colors && tile.colors[key]);
+      const [a,b] = pair;
+      const [cx,cy] = corner(pair);
+      out += `<path d="M ${P[a][0]} ${P[a][1]} Q ${cx} ${cy} ${P[b][0]} ${P[b][1]}" stroke="${col}" stroke-width="${SW}" fill="none" stroke-linecap="round"/>`;
+    });
+  } else {
+    const pair = tile.pairs[0];
+    const key = pairKey(pair);
+    const col = colorFor(tile.colors && tile.colors[key]);
+    const [a,b] = pair;
+    out += `<path d="M ${P[a][0]} ${P[a][1]} Q 50 50 ${P[b][0]} ${P[b][1]}" stroke="${col}" stroke-width="${SW}" fill="none" stroke-linecap="round"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${out}</svg>`;
+}
+
+const boardEl = document.getElementById('board');
+
+function placeAtIndex(el, index){
+  const r = Math.floor(index/4), c = index%4;
+  el.style.transform = `translate(${c*100}%, ${r*100}%)`;
+}
+
+function buildBoardDOM(){
+  boardEl.innerHTML = '';
+
+  const layer = document.createElement('div');
+  layer.className = 'tile-layer no-anim';
+  layer.id = 'tileLayer';
+
+  state.divByIndex = new Array(16).fill(null);
+  for(let i=0;i<16;i++){
+    const tile = state.board[i]; // board is still the solved arrangement at this point
+    if(tile===null) continue;
+    const div = document.createElement('div');
+    div.className = 'tile';
+    div.dataset.index = i;
+    div.innerHTML = `<div class="tile-inner">${tileSVG(tile)}</div>`;
+    placeAtIndex(div, i);
+    div.addEventListener('click', onTileClick);
+    layer.appendChild(div);
+    state.divByIndex[i] = div;
+  }
+  boardEl.appendChild(layer);
+
+  const all = [
+    Object.assign({car:'car1', kind:'start'}, state.markers.car1.start),
+    Object.assign({car:'car1', kind:'pass'}, state.markers.car1.passenger),
+    Object.assign({car:'car1', kind:'finish'}, state.markers.car1.finish),
+    Object.assign({car:'car2', kind:'start'}, state.markers.car2.start),
+    Object.assign({car:'car2', kind:'pass'}, state.markers.car2.passenger),
+    Object.assign({car:'car2', kind:'finish'}, state.markers.car2.finish),
+  ];
+  const icon = {
+    start:'▶',
+    pass:'<svg class="marker-icon marker-person-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+    finish:'<svg class="marker-icon marker-flag-icon" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M168.941-.011v1920H56v-1920h112.941Zm112.941 68.453c308.669-81.656 496.15 26.429 677.196 133.045 203.407 119.944 413.59 244.066 833.844 139.03 20.217-4.969 41.676 1.469 55.793 17.168 13.892 15.699 18.07 37.835 10.843 57.487-203.407 542.343-504.17 552.734-794.993 562.786-223.285 7.906-454.25 15.811-686.344 247.906l-96.339 96.338Z"/></svg>'
+  };
+  for(const m of all){
+    const div = document.createElement('div');
+    div.className = `marker ${m.kind} ${m.car} side-${m.side}`;
+    if(m.kind==='start' || m.kind==='finish'){
+      const stub = document.createElement('div');
+      stub.className = 'marker-stub';
+      div.appendChild(stub);
+    }
+    if(m.side==='N'){ div.style.setProperty('--r',1); div.style.setProperty('--c', m.c+2); }
+    if(m.side==='S'){ div.style.setProperty('--r',6); div.style.setProperty('--c', m.c+2); }
+    if(m.side==='W'){ div.style.setProperty('--c',1); div.style.setProperty('--r', m.r+2); }
+    if(m.side==='E'){ div.style.setProperty('--c',6); div.style.setProperty('--r', m.r+2); }
+    const badge = document.createElement('div');
+    badge.className = `marker-badge ${m.car} ${m.kind}`;
+    badge.innerHTML = icon[m.kind];
+    div.appendChild(badge);
+    div.title = (m.car==='car1'?'Car A ':'Car B ') + (m.kind==='start'?'start':m.kind==='pass'?'passenger pickup':'finish');
+    boardEl.appendChild(div);
+  }
+}
+
+function releaseAnimLock(){
+  const layer = document.getElementById('tileLayer');
+  if(layer) layer.classList.remove('no-anim');
+}
+
+function renderSlidableHints(){
+  const blankR = Math.floor(state.blank/4), blankC = state.blank%4;
+  for(let i=0;i<16;i++){
+    const div = state.divByIndex[i];
+    if(!div) continue;
+    const r = Math.floor(i/4), c = i%4;
+    const adjacent = (Math.abs(r-blankR)+Math.abs(c-blankC))===1;
+    div.classList.toggle('slidable', adjacent && !state.solving && !state.wonThisRound);
+  }
+}
+
+/* generic position-swap used by player moves, scramble, and solve-reversal */
+function applyRawSwap(p,q){
+  const divP = state.divByIndex[p], divQ = state.divByIndex[q];
+  const tmp = state.board[p];
+  state.board[p] = state.board[q];
+  state.board[q] = tmp;
+  state.divByIndex[p] = divQ;
+  state.divByIndex[q] = divP;
+  if(divQ){ divQ.dataset.index = p; placeAtIndex(divQ, p); }
+  if(divP){ divP.dataset.index = q; placeAtIndex(divP, q); }
+}
+
+/* a = blank position, b = neighboring tile position moving into the blank */
+function swap(a,b){
+  applyRawSwap(a,b);
+  state.moveLog.push([a,b]);
+  state.blank = b;
+}
+
+function neighborsOf(i){
+  const r = Math.floor(i/4), c = i%4, out = [];
+  if(r>0) out.push(i-4);
+  if(r<3) out.push(i+4);
+  if(c>0) out.push(i-1);
+  if(c<3) out.push(i+1);
+  return out;
+}
+
+/* =========================================================
+   Game flow
+========================================================= */
+function boardStateKey(board, blank){
+  return board.map(tile=>tile ? JSON.stringify(tile) : '_').join('|') + '|' + blank;
+}
+
+function isWinningBoard(board, markers){
+  const a = findWinningCarPath(board, markers.car1, 'car1');
+  if(!a) return false;
+  const b = findWinningCarPath(board, markers.car2, 'car2');
+  return !!b;
+}
+
+// Breadth-first difficulty gate used only during generation. Collision handling
+// is deliberately ignored here, just as it is during normal win checking.
+function canSolveWithinMoves(board, blank, markers, maxDepth){
+  const startKey = boardStateKey(board, blank);
+  const queue = [{board:board.slice(), blank, depth:0}];
+  const seen = new Set([startKey]);
+  while(queue.length){
+    const cur=queue.shift();
+    if(isWinningBoard(cur.board, markers)) return true;
+    if(cur.depth>=maxDepth) continue;
+    for(const n of neighborsOf(cur.blank)){
+      const nextBoard=cur.board.slice();
+      [nextBoard[cur.blank],nextBoard[n]]=[nextBoard[n],nextBoard[cur.blank]];
+      const key=boardStateKey(nextBoard,n);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      queue.push({board:nextBoard,blank:n,depth:cur.depth+1});
+    }
+  }
+  return false;
+}
+
+function newGame(options={}){
+  closeModal('menuOverlay');
+  const dailyDate = options.dailyDate || null;
+  if(dailyDate && dailyResults[dailyDate]){
+    showDailyResults(dailyDate);
+    return;
+  }
+  const previousRandom = randomFn;
+  randomFn = dailyDate ? seededRandom(`detour-${dailyDate}`) : Math.random;
+  let p = null;
+  try {
+    p = generatePuzzle();
+  } catch (err) {
+    console.error('Detour puzzle generation failed:', err);
+    try { p = generatePuzzle(0); } catch (err2) {
+      console.error('Detour puzzle retry failed:', err2);
+      randomFn = previousRandom;
+      alert('Unable to generate a puzzle. Please try again.');
+      return;
+    }
+  }
+  const steps = 8 + Math.floor(rand()*3);
+  state.markers = p.markers;
+  state.segs = p.segs;
+  state.board = p.board.slice();
+  state.solvedBoard = p.board.slice();
+  state.blank = idx(p.reserved.r, p.reserved.c);
+  // p.board is the complete, known-valid solution with one empty space.
+  // Scramble only by legal blank slides so every generated puzzle remains
+  // reachable from that solution.
+  state.board[state.blank] = null;
+  state.shuffleLog = [];
+  buildBoardDOM();
+  let previousBlank = -1;
+  for(let k=0; k<steps; k++){
+    const from = state.blank;
+    let options = neighborsOf(from);
+    // Never immediately undo the previous shuffle. This makes the requested
+    // 8–10 random slides produce meaningful displacement instead of canceling
+    // themselves out.
+    if(previousBlank >= 0 && options.length > 1) options = options.filter(i=>i!==previousBlank);
+    const pick = options[Math.floor(rand()*options.length)];
+    applyRawSwap(from,pick);
+    state.blank = pick;
+    state.shuffleLog.push([from,pick]);
+    previousBlank = from;
+  }
+
+  // Reject boards that can already be solved in only a few moves because of
+  // alternate routes. The puzzle is still generated from the known solution
+  // and scrambled with exactly 8–10 legal slides, but we require a minimum
+  // practical solution depth of 5 moves.
+  if(canSolveWithinMoves(state.board, state.blank, state.markers, 7)) return newGame(options);
+  state.initialBoard = state.board.slice();
+  state.initialBlank = state.blank;
+  state.moveLog = [];
+  state.moveCount = 0;
+  state.wonThisRound = false;
+  state.solving = false;
+  state.mode = dailyDate ? 'daily' : 'random';
+  state.dailyDate = dailyDate;
+  state.isTestSolve = false;
+  state.elapsedMs = 0;
+  state.startTime = Date.now();
+  updateMenuCloseVisibility();
+  randomFn = previousRandom;
+  document.getElementById('moveCount').textContent = '0';
+  document.getElementById('timeDisplay').textContent = '0:00';
+  buildBoardDOM();
+  renderSlidableHints();
+  requestAnimationFrame(()=> requestAnimationFrame(releaseAnimLock));
+}
+
+function showDailyResults(date){
+  const result=dailyResults[date];
+  if(!result) return;
+  state.mode='daily'; state.dailyDate=date; state.wonThisRound=true; state.moveCount=Number(result.moves)||0;
+  updateMenuCloseVisibility();
+  state.elapsedMs=Number(result.timeMs)||0;
+  document.getElementById('winScore').textContent=state.moveCount;
+  document.getElementById('winTime').textContent=formatElapsed(state.elapsedMs);
+  document.getElementById('timeDisplay').textContent=formatElapsed(state.elapsedMs);
+  openModal('winOverlay');
+}
+
+function onTileClick(e){
+  if(state.solving || state.wonThisRound) return;
+  const i = Number(e.currentTarget.dataset.index);
+  if(state.board[i]===null) return;
+  if(!neighborsOf(state.blank).includes(i)) return;
+  swap(state.blank, i);
+  state.moveCount++;
+  document.getElementById('moveCount').textContent = state.moveCount;
+  renderSlidableHints();
+  checkWin();
+}
+
+function laneAllows(tile, keyOrSide, car){
+  const color = tile.colors && tile.colors[keyOrSide];
+  return color === car || color === 'mixed';
+}
+
+function tileConnectionsForCar(tile, entryDir, car){
+  if(!tile) return [];
+
+  if(tile.type === 'plus'){
+    if(!laneAllows(tile, entryDir, car)) return [];
+    return DIRS.filter(d => d !== entryDir && laneAllows(tile, d, car));
+  }
+
+  const out = [];
+  for(const pair of tile.pairs || []){
+    const key = pairKey(pair);
+    if(pair.includes(entryDir) && laneAllows(tile, key, car)){
+      out.push(pair[0] === entryDir ? pair[1] : pair[0]);
+    }
+  }
+  return out;
+}
+
+function findWinningCarPath(board, marker, car){
+  const path = [{r:marker.start.r, c:marker.start.c}];
+  const visited = new Set([cellKey(marker.start.r, marker.start.c)]);
+  const pickupKey = cellKey(marker.passenger.r, marker.passenger.c);
+  const finishKey = cellKey(marker.finish.r, marker.finish.c);
+
+  // Search a continuous route from start to finish, requiring
+  // that pickup is visited first. This permits alternate solutions.
+  function dfs(cur, entryDir, phase){
+    const curKey = cellKey(cur.r, cur.c);
+    const nextPhase = (phase || curKey === pickupKey) ? 1 : 0;
+
+    if(curKey === finishKey && nextPhase === 1){
+      const exits = tileConnectionsForCar(board[idx(cur.r, cur.c)], entryDir, car);
+      if(exits.includes(marker.finish.side)) return true;
+    }
+
+    const exits = tileConnectionsForCar(board[idx(cur.r, cur.c)], entryDir, car);
+
+    for(const exitDir of exits){
+      const [dr,dc] = DELTA[exitDir];
+      const nr = cur.r + dr, nc = cur.c + dc;
+      if(!inBounds(nr,nc)) continue;
+
+      const nk = cellKey(nr,nc);
+      if(visited.has(nk)) continue;
+
+      const nextTile = board[idx(nr,nc)];
+      const nextEntry = OPP[exitDir];
+      if(!tileConnectionsForCar(nextTile, nextEntry, car).length) continue;
+
+      visited.add(nk);
+      path.push({r:nr,c:nc});
+      if(dfs({r:nr,c:nc}, nextEntry, nextPhase)) return true;
+      path.pop();
+      visited.delete(nk);
+    }
+    return false;
+  }
+
+  if(!dfs({r:marker.start.r,c:marker.start.c}, marker.start.side, 0)) return null;
+  return computeSegments(path, marker.start.side, marker.finish.side);
+}
+
+function findWinningRoutes(){
+  const segs1 = findWinningCarPath(state.board, state.markers.car1, 'car1');
+  if(!segs1) return null;
+
+  const segs2 = findWinningCarPath(state.board, state.markers.car2, 'car2');
+  if(!segs2) return null;
+
+  // Cars are allowed to occupy the same tile. Collision handling is intentionally
+  // ignored by the win condition.
+  return {car1:segs1, car2:segs2};
+}
+
+function checkWin(){
+  if(state.wonThisRound) return true;
+
+  const routes = findWinningRoutes();
+  if(!routes) return false;
+
+  // Use the actual valid routes found on the current board for
+  // the victory animation; the original solved arrangement is
+  // no longer required.
+  state.segs = routes;
+  state.elapsedMs = Math.max(0, Date.now() - state.startTime);
+  document.getElementById('timeDisplay').textContent = formatElapsed(state.elapsedMs);
+  triggerWinSequence();
+  return true;
+}
+
+function triggerWinSequence(){
+  if(state.wonThisRound) return;
+  state.wonThisRound = true;
+  renderSlidableHints();
+  animateCarJourney(finalizeWin);
+}
+
+function formatElapsed(ms){
+  if(!Number.isFinite(ms) || ms < 0) return '–';
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+function finalizeWin(){
+  const elapsed = state.elapsedMs || Math.max(0, Date.now() - state.startTime);
+  if(state.mode==='daily' && state.dailyDate && !state.isTestSolve && !dailyResults[state.dailyDate]){
+    dailyResults[state.dailyDate]={moves:state.moveCount, timeMs:elapsed, solvedAt:Date.now()};
+    storageSet('dailyResults',JSON.stringify(dailyResults));
+    rebuildDailyStats();
+    refreshDailyButton();
+  }
+  document.getElementById('winScore').textContent = state.moveCount;
+  document.getElementById('winTime').textContent = formatElapsed(elapsed);
+  openModal('winOverlay');
+}
+
+/* Slow, deliberate drive-through animation so the player can see both cars
+   move tile-by-tile along their finished routes. Cars may share tiles. */
+function animateCarJourney(done){
+  const layer = document.getElementById('tileLayer');
+  if(!layer || !state.segs){ done(); return; }
+  const segs = state.segs;
+  const maxT = Math.max(segs.car1.length, segs.car2.length) - 1;
+  const STEP_MS = 620;
+  let finished = false;
+
+  const finish = ()=>{
+    if(finished) return;
+    finished=true;
+    done();
+  };
+
+  function segAt(car,t){
+    const arr = segs[car];
+    return arr[Math.min(t, arr.length-1)];
+  }
+  function clearHighlights(){
+    layer.querySelectorAll('.passing-car1,.passing-car2').forEach(el=>{
+      el.classList.remove('passing-car1','passing-car2');
+    });
+  }
+
+  const dots = {};
+  try{
+    ['car1','car2'].forEach(car=>{
+      const seg0 = segAt(car,0);
+      const dot = document.createElement('div');
+      dot.className = 'car-dot ' + car;
+      dot.innerHTML = '<span></span>';
+      placeAtIndex(dot, idx(seg0.cell.r, seg0.cell.c));
+      layer.appendChild(dot);
+      dots[car] = dot;
+    });
+
+    function highlight(t){
+      clearHighlights();
+      ['car1','car2'].forEach(car=>{
+        const seg = segAt(car,t);
+        const div = state.divByIndex[idx(seg.cell.r, seg.cell.c)];
+        if(div) div.querySelector('.tile-inner').classList.add('passing-'+car);
+      });
+    }
+
+    highlight(0);
+    let t = 0;
+    const timer = setInterval(()=>{
+      try{
+        t++;
+        if(t>maxT){
+          clearInterval(timer);
+          setTimeout(()=>{
+            clearHighlights();
+            if(dots.car1) dots.car1.remove();
+            if(dots.car2) dots.car2.remove();
+            finish();
+          }, 480);
+          return;
+        }
+        ['car1','car2'].forEach(car=>{
+          const seg = segAt(car,t);
+          placeAtIndex(dots[car], idx(seg.cell.r, seg.cell.c));
+        });
+        highlight(t);
+      }catch(e){
+        clearInterval(timer);
+        clearHighlights();
+        if(dots.car1) dots.car1.remove();
+        if(dots.car2) dots.car2.remove();
+        finish();
+      }
+    }, STEP_MS);
+  }catch(e){
+    clearHighlights();
+    if(dots.car1) dots.car1.remove();
+    if(dots.car2) dots.car2.remove();
+    finish();
+  }
+}
+
+/* =========================================================
+   UI wiring
+========================================================= */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function updateMenuCloseVisibility(){ const btn=document.getElementById('menuCloseBtn'); if(btn) btn.hidden = !state.markers; }
+
+document.querySelectorAll('.modal-overlay').forEach(scrim=>{
+  scrim.addEventListener('click', e=>{ if(e.target===scrim) closeModal(scrim.id); });
+});
+
+/* Main template navigation */
+document.getElementById('menuToggleBtn').addEventListener('click', ()=>openModal('menuOverlay'));
+document.getElementById('menuCloseBtn').addEventListener('click', ()=>closeModal('menuOverlay'));
+document.getElementById('rulesBtn').addEventListener('click', ()=>openModal('rulesOverlay'));
+document.getElementById('rulesCloseBtn').addEventListener('click', ()=>closeModal('rulesOverlay'));
+document.getElementById('menuRulesBtn').addEventListener('click', ()=>{
+  closeModal('menuOverlay'); openModal('rulesOverlay');
+});
+document.getElementById('menuStatsBtn').addEventListener('click', ()=>{
+  refreshStats(); closeModal('menuOverlay'); openModal('statsOverlay');
+});
+document.getElementById('winCloseBtn').addEventListener('click', ()=>closeModal('winOverlay'));
+document.getElementById('winNewBtn').addEventListener('click', ()=>{
+  closeModal('winOverlay'); openModal('menuOverlay');
+});
+document.getElementById('statsBackBtn').addEventListener('click', ()=>{
+  closeModal('statsOverlay');
+  openModal('menuOverlay');
+});
+
+function refreshMenuSub(){
+  const el=document.getElementById('menuSub');
+  const d=todayKey();
+  if(dailyResults[d]){
+    const now=new Date();
+    const next=new Date(now); next.setHours(24,0,0,0);
+    const ms=Math.max(0,next-now);
+    const total=Math.floor(ms/60000);
+    const hh=Math.floor(total/60), mm=total%60;
+    el.textContent=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')} until the next daily`;
+  } else {
+    el.textContent='Go for the daily, or try a random puzzle';
+  }
+}
+
+function refreshDailyButton(){
+  const btn=document.getElementById('dailyBtn');
+  const d=todayKey();
+  btn.textContent=dailyResults[d] ? 'Show daily results' : 'Daily puzzle';
+  refreshMenuSub();
+}
+setInterval(refreshMenuSub, 30000);
+
+/* TEST ONLY: remove this listener with the Solve button before publishing. */
+document.getElementById('solveBtn').addEventListener('click', ()=>{
+  if(state.wonThisRound || state.solving) return;
+  state.isTestSolve=true;
+  state.solving=true;
+
+  // Reverse the exact shuffle. This never removes a tile and guarantees that
+  // the board returns to the known-valid solution produced by generatePuzzle().
+  for(let i=state.shuffleLog.length-1; i>=0; i--){
+    const [from, to] = state.shuffleLog[i];
+    // After reversing later moves, the blank is at `to` and the tile that was
+    // moved during the shuffle is at `from`.
+    applyRawSwap(to, from);
+    state.blank=from;
+  }
+
+  state.moveLog=[];
+  state.moveCount=0;
+  document.getElementById('moveCount').textContent='0';
+  buildBoardDOM();
+  renderSlidableHints();
+  state.solving=false;
+  checkWin();
+});
+
+/* Random puzzle — always 8–10 shuffles. */
+document.getElementById('randomBtn').addEventListener('click', ()=>{
+  newGame();
+});
+
+/* Theme */
+function applyTemplateTheme(theme){
+  const isLight = theme === 'light';
+  document.documentElement.dataset.theme = isLight ? 'light' : 'dark';
+  document.getElementById('themeToggleBtn').textContent = isLight ? 'Dark mode' : 'Light mode';
+  storageSet('theme', isLight ? 'light' : 'dark');
+}
+document.getElementById('themeToggleBtn').addEventListener('click', ()=>{
+  applyTemplateTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+});
+
+/* PWA install prompt */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+const addHomeBtn = document.getElementById('addHomeBtn');
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+let deferredInstallPrompt = null;
+
+if(isStandalone){
+  // Already installed and running as an app — nothing to prompt for.
+  addHomeBtn.hidden = true;
+} else if(!isIOS){
+  // Chrome/Edge/Android: stay hidden until the browser confirms the app is
+  // actually installable (valid manifest + registered service worker).
+  addHomeBtn.hidden = true;
+}
+
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  addHomeBtn.hidden = false;
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+  addHomeBtn.hidden = true;
+});
+
+addHomeBtn.addEventListener('click', async ()=>{
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(()=>null);
+    deferredInstallPrompt = null;
+    return;
+  }
+  if(isIOS){
+    alert('To install Detour, tap the Share icon in Safari, then choose “Add to Home Screen”.');
+    return;
+  }
+  alert('To install Detour, use your browser menu and choose Install app or Add to Home screen.');
+});
+
+/* Session statistics */
+function refreshStats(){
+  rebuildDailyStats();
+  document.getElementById('statsTotal').textContent = `${dailyStats.solved}`;
+  document.getElementById('statsAverage').textContent = dailyStats.solved ? (dailyStats.totalMoves/dailyStats.solved).toFixed(1) : '0';
+  document.getElementById('statsStreak').textContent = `${dailyStats.currentStreak}`;
+  document.getElementById('statsAvgTime').textContent = dailyStats.solved ? formatElapsed(dailyStats.totalTimeMs/dailyStats.solved) : '–';
+  document.getElementById('statsBestTime').textContent = dailyStats.bestTimeMs!=null ? formatElapsed(dailyStats.bestTimeMs) : '–';
+}
+
+/* Share */
+async function shareElement(elementId, fallbackText){
+  const el = document.getElementById(elementId);
+  let imageBlob = null;
+  if(window.html2canvas && el){
+    try{
+      const canvas = await html2canvas(el, {backgroundColor:null, scale:2});
+      imageBlob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    }catch(e){}
+  }
+  try{
+    if(navigator.share){
+      const data = { title:'Detour', text:fallbackText };
+      if(imageBlob && navigator.canShare){
+        const file = new File([imageBlob], 'detour-result.png', {type:'image/png'});
+        if(navigator.canShare({files:[file]})) data.files=[file];
+      }
+      await navigator.share(data);
+      return;
+    }
+  }catch(e){}
+  try{
+    await navigator.clipboard.writeText(fallbackText);
+    alert('Result copied to clipboard.');
+  }catch(e){
+    alert(fallbackText);
+  }
+}
+
+document.getElementById('shareBtn').addEventListener('click', ()=>{
+  const moves = state.moveCount;
+  const time = formatElapsed(state.elapsedMs);
+  if(state.mode==='daily'){
+    const url = dailyUrl(state.dailyDate || todayKey());
+    shareElement('winCard', `I solved today's detour in ${moves} moves in ${time}!\n${url}`);
+  } else {
+    shareElement('winCard', `I solved a detour puzzle in ${moves} moves in ${time}!\n${window.location.href}`);
+  }
+});
+document.getElementById('statsShareBtn').addEventListener('click', ()=>{
+  rebuildDailyStats();
+  const avgMoves = dailyStats.solved ? (dailyStats.totalMoves/dailyStats.solved).toFixed(1) : '0';
+  const avgTime = dailyStats.solved ? formatElapsed(dailyStats.totalTimeMs/dailyStats.solved) : '–';
+  const bestTime = dailyStats.bestTimeMs!=null ? formatElapsed(dailyStats.bestTimeMs) : '–';
+  shareElement('statsCard', `Detour — ${dailyStats.solved} daily puzzles, average ${avgMoves} moves, average time ${avgTime}, best time ${bestTime}, ${dailyStats.currentStreak} day streak.\n${window.location.href}`);
+});
+
+/* Hold-to-reset */
+let holdTimer = null;
+let holdStarted = false;
+const holdBtn = document.getElementById('resetHoldBtn');
+const HOLD_MS = 900;
+function cancelResetHold(){
+  if(holdTimer){ clearInterval(holdTimer); holdTimer=null; }
+  holdBtn.classList.remove('holding');
+  holdBtn.style.setProperty('--hold-progress','0');
+  holdStarted=false;
+}
+function startResetHold(e){
+  if(e && e.button !== undefined && e.button !== 0) return;
+  if(state.solving || state.wonThisRound) return;
+  cancelResetHold();
+  holdStarted=true;
+  holdBtn.classList.add('holding');
+  const started=performance.now();
+  holdTimer=setInterval(()=>{
+    const progress=Math.min(1,(performance.now()-started)/HOLD_MS);
+    holdBtn.style.setProperty('--hold-progress',progress);
+    if(progress>=1){
+      clearInterval(holdTimer); holdTimer=null; holdBtn.classList.remove('holding'); holdBtn.style.setProperty('--hold-progress','0'); holdStarted=false;
+      resetCurrentPuzzle();
+    }
+  },16);
+}
+function resetCurrentPuzzle(){
+  if(state.wonThisRound) return;
+  state.solving=true;
+  state.board=state.initialBoard.slice();
+  state.blank=state.initialBlank;
+  state.moveLog=[];
+  state.moveCount=0;
+  state.elapsedMs=0;
+  state.startTime=Date.now();
+  buildBoardDOM();
+  document.getElementById('moveCount').textContent='0';
+  document.getElementById('timeDisplay').textContent='0:00';
+  state.solving=false;
+  renderSlidableHints();
+}
+holdBtn.addEventListener('pointerdown', startResetHold);
+holdBtn.addEventListener('pointerup', cancelResetHold);
+holdBtn.addEventListener('pointercancel', cancelResetHold);
+holdBtn.addEventListener('pointerleave', cancelResetHold);
+holdBtn.addEventListener('contextmenu', e=>e.preventDefault());
+
+/* Keyboard movement */
+document.addEventListener('keydown', e=>{
+  if(state.solving || state.wonThisRound) return;
+  const dirMap = { ArrowUp:[1,0], ArrowDown:[-1,0], ArrowLeft:[0,1], ArrowRight:[0,-1] };
+  if(!dirMap[e.key]) return;
+  const br=Math.floor(state.blank/4), bc=state.blank%4;
+  const [dr,dc]=dirMap[e.key];
+  const nr=br+dr,nc=bc+dc;
+  if(!inBounds(nr,nc)) return;
+  swap(state.blank,idx(nr,nc));
+  state.moveCount++;
+  document.getElementById('moveCount').textContent=state.moveCount;
+  renderSlidableHints();
+  checkWin();
+  e.preventDefault();
+});
+
+/* Live timer — ticks once a second while a puzzle is in progress, and
+   freezes once the round is won (see the explicit freeze in checkWin). */
+setInterval(()=>{
+  if(!state.startTime || state.solving || state.wonThisRound) return;
+  document.getElementById('timeDisplay').textContent = formatElapsed(Date.now() - state.startTime);
+}, 1000);
+
+/* Initial theme and menu.  Do not generate a puzzle until the player chooses
+   Daily puzzle or Random puzzle from the opening menu. */
+applyTemplateTheme(storageGet('theme') || 'dark');
+refreshDailyButton();
+updateMenuCloseVisibility();
+const requestedDaily=new URLSearchParams(window.location.search).get('daily');
+const openingDailyDate = requestedDaily || todayKey();
+document.getElementById('dailyBtn').addEventListener('click', ()=>newGame({dailyDate:openingDailyDate}));
+openModal('menuOverlay');
+
+
+
+    })();
+  </script>
+</body>
+
+</html>
