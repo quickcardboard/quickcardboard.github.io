@@ -1486,7 +1486,8 @@ function canSolveWithinMoves(board, blank, markers, maxDepth){
   return false;
 }
 
-function newGame(options={}){
+const MAX_DIFFICULTY_RETRIES = 40;
+function newGame(options={}, retryCount=0){
   closeModal('menuOverlay');
   const dailyDate = options.dailyDate || null;
   if(dailyDate && dailyResults[dailyDate]){
@@ -1494,7 +1495,16 @@ function newGame(options={}){
     return;
   }
   const previousRandom = randomFn;
-  randomFn = dailyDate ? seededRandom(`detour-${dailyDate}`) : Math.random;
+  // Daily puzzles are seeded from the date alone so every player gets the same
+  // board. IMPORTANT: if a generated board turns out to be too easy (see the
+  // canSolveWithinMoves gate below), a *bare* re-seed from the same date string
+  // would replay the exact same deterministic RNG sequence and regenerate the
+  // identical "too easy" board forever, recursing without end and crashing the
+  // tab. Folding retryCount into the seed (only once a retry is actually
+  // needed) keeps the very first attempt's seed unchanged for every date that
+  // already works, while guaranteeing a genuinely different board on retries.
+  const seedSuffix = retryCount > 0 ? `-r${retryCount}` : '';
+  randomFn = dailyDate ? seededRandom(`detour-${dailyDate}${seedSuffix}`) : Math.random;
   let p = null;
   try {
     p = generatePuzzle();
@@ -1538,7 +1548,12 @@ function newGame(options={}){
   // alternate routes. The puzzle is still generated from the known solution
   // and scrambled with exactly 8–10 legal slides, but we require a minimum
   // practical solution depth of 5 moves.
-  if(canSolveWithinMoves(state.board, state.blank, state.markers, 7)) return newGame(options);
+  // Capped and seed-varying (see above) so an unlucky date can never trigger
+  // unbounded recursion: after MAX_DIFFICULTY_RETRIES attempts we just accept
+  // the board we have rather than hang or crash the tab.
+  if(canSolveWithinMoves(state.board, state.blank, state.markers, 7) && retryCount < MAX_DIFFICULTY_RETRIES){
+    return newGame(options, retryCount+1);
+  }
   state.initialBoard = state.board.slice();
   state.initialBlank = state.blank;
   state.moveLog = [];
