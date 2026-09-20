@@ -1,0 +1,18 @@
+{
+  "id": "./prism.html",
+  "name": "Prism",
+  "short_name": "Prism",
+  "description": "A daily color-mixing puzzle. Steer a white beam with mirrors, dimmers, splitters and prisms until the light matches the target.",
+  "start_url": "./prism.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0D0F15",
+  "theme_color": "#0D0F15",
+  "lang": "en",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "icons/prism-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/prism-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/prism-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

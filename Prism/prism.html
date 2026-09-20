@@ -1,0 +1,3023 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>Prism</title>
+  <meta name="color-scheme" content="dark">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230D0F15'/%3E%3Cline x1='5' y1='35' x2='19' y2='35' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3Cpolygon points='30,12 48,46 12,46' fill='none' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3Cline x1='41' y1='29' x2='59' y2='20' stroke='%23ff5468' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='43' y1='35' x2='60' y2='35' stroke='%233ddc97' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='44' y1='41' x2='59' y2='50' stroke='%235b8cff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/prism-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Prism">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0D0F15">
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0D0F15;
+      --panel: #161922;
+      --surface: #1D212C;
+      --ink: #EEF0F7;
+      --ink-soft: #8D95AA;
+      --line: #2C3242;
+      --line-soft: #232838;
+      --overlay: rgba(4, 5, 9, 0.66);
+      --shadow: rgba(0, 0, 0, 0.55);
+      --error: #FF6B7A;
+
+      --board: #080A0F;
+      --grid: rgba(255, 255, 255, 0.055);
+      --r: #FF5468;
+      --g: #3DDC97;
+      --b: #5B8CFF;
+
+      --radius: 6px;
+      --gap: 6px;
+      --menu-btn-height: 54px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 14px 8px 20px;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    .game {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Everything in the play column is exactly as wide as the board */
+    .col {
+      --chrome: 285px;
+      width: min(100%, calc(100vh - var(--chrome)));
+      width: min(100%, calc(100dvh - var(--chrome)));
+      min-width: min(100%, 300px);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    header {
+      width: 100%;
+      margin-bottom: 10%;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 2.0rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      border-radius: 7px;
+      display: block;
+    }
+
+    .icon-btn {
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 140ms ease, background-color 140ms ease;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .header-btn {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #rulesBtn.header-btn {
+      padding: 0 16px;
+    }
+
+    #addHomeBtn.header-btn {
+      width: 42px;
+      flex: 0 0 42px;
+      padding: 0;
+    }
+
+    #addHomeBtn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    #addHomeBtn[hidden] {
+      display: none;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    /* Action & Menu Button Styling */
+    .actions {
+      width: 100%;
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button.btn {
+      appearance: none;
+      position: relative;
+      overflow: hidden;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 16px;
+      border-radius: 13px;
+      cursor: pointer;
+      flex: 1 1 auto;
+      min-height: 54px;
+      transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease, opacity 140ms ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    button.btn:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    button.btn:disabled {
+      opacity: 0.38;
+      cursor: default;
+    }
+
+    button.btn:disabled:hover {
+      border-color: var(--line);
+      background: var(--panel);
+    }
+
+    button.btn.icon-only {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 48px;
+      padding: 0;
+    }
+
+    button.btn.icon-only svg {
+      position: relative;
+      width: 22px;
+      height: 22px;
+    }
+
+    /* rgb toggle: the letters are the icon */
+    .rgbtxt {
+      position: relative;
+      font-weight: 800;
+      font-size: 1.02rem;
+      letter-spacing: 0.01em;
+      line-height: 1;
+    }
+
+    .rgbtxt i {
+      font-style: normal;
+      color: var(--ink-soft);
+      transition: color 140ms ease;
+    }
+
+    #rgbBtn[aria-pressed="true"] {
+      border-color: var(--ink-soft);
+    }
+
+    #rgbBtn[aria-pressed="true"] .rgbtxt i:nth-child(1) {
+      color: var(--r);
+    }
+
+    #rgbBtn[aria-pressed="true"] .rgbtxt i:nth-child(2) {
+      color: var(--g);
+    }
+
+    #rgbBtn[aria-pressed="true"] .rgbtxt i:nth-child(3) {
+      color: var(--b);
+    }
+
+    #rgbBtn[aria-pressed="false"] .rgbtxt::after {
+      content: "";
+      position: absolute;
+      left: -3px;
+      right: -3px;
+      top: 50%;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--ink-soft);
+      transform: rotate(-24deg);
+    }
+
+    /* Hold-to-reset fill */
+    .holdable::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: rgba(255, 107, 122, 0.34);
+      transform: scaleY(0);
+      transform-origin: 50% 100%;
+      transition: transform 160ms ease;
+    }
+
+    .holdable.holding::before {
+      transform: scaleY(1);
+      transition: transform var(--hold-ms, 700ms) linear;
+    }
+
+    .holdable.holding {
+      border-color: var(--error);
+    }
+
+    /* ===== Play area ===== */
+    .play {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      background: var(--board);
+      box-shadow: 0 0 0 1.5px var(--line);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      transition: box-shadow 500ms ease;
+    }
+
+    #stage.solved {
+      box-shadow: 0 0 0 1.5px var(--win, var(--line)), 0 0 46px -8px var(--win, transparent);
+    }
+
+    #stage.loop {
+      box-shadow: 0 0 0 1.5px var(--error);
+    }
+
+    #cells {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template: repeat(6, 1fr) / repeat(6, 1fr);
+    }
+
+    .cell {
+      position: relative;
+      box-shadow: inset 0 0 0 0.5px var(--grid);
+      outline-offset: -3px;
+      transition: background-color 120ms ease;
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 4px;
+      height: 4px;
+      margin: -2px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .cell:focus-visible {
+      outline: 2px solid var(--ink);
+    }
+
+    .cell.hover {
+      background: rgba(140, 160, 255, 0.17);
+    }
+
+    .cell.pick {
+      background: rgba(140, 160, 255, 0.07);
+    }
+
+    #beams,
+    #labels,
+    #fx {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #beams {
+      transition: opacity 250ms ease;
+    }
+
+    #labels {
+      transition: opacity 200ms ease;
+    }
+
+    #stage.winning #beams {
+      opacity: 0.28;
+    }
+
+    #stage.winning #labels {
+      opacity: 0;
+    }
+
+    #pieces {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .pc {
+      position: absolute;
+      width: 16.6667%;
+      height: 16.6667%;
+      pointer-events: none;
+    }
+
+    .pc.mv {
+      pointer-events: auto;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .pc.mv:active {
+      cursor: grabbing;
+    }
+
+    .pc svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    .pc.pop {
+      animation: pcPop 220ms ease-out;
+    }
+
+    .pc.rot {
+      animation: pcRot 180ms ease-out;
+    }
+
+    .pc.zap {
+      animation: pcZap 340ms ease-out;
+    }
+
+    .pc.lit {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 12px var(--glow, #fff));
+      z-index: 3;
+    }
+
+    .pc.ignite {
+      animation: tgtIgnite 700ms cubic-bezier(.2, .8, .2, 1) forwards;
+      z-index: 3;
+    }
+
+    @keyframes pcPop {
+      0% {
+        transform: scale(0.55);
+        opacity: 0.35;
+      }
+
+      60% {
+        transform: scale(1.09);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes pcRot {
+      from {
+        transform: rotate(-90deg);
+      }
+
+      to {
+        transform: none;
+      }
+    }
+
+    @keyframes pcZap {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+
+      38% {
+        transform: scale(1.15);
+        filter: brightness(1.7);
+      }
+
+      100% {
+        transform: scale(1);
+        filter: none;
+      }
+    }
+
+    @keyframes tgtIgnite {
+      0% {
+        transform: scale(1);
+      }
+
+      35% {
+        transform: scale(1.24);
+        filter: brightness(1.6) drop-shadow(0 0 16px var(--glow, #fff));
+      }
+
+      100% {
+        transform: scale(1.06);
+        filter: drop-shadow(0 0 12px var(--glow, #fff));
+      }
+    }
+
+    .stage-note {
+      position: absolute;
+      left: 50%;
+      top: -11px;
+      transform: translateX(-50%);
+      z-index: 6;
+      pointer-events: none;
+      white-space: nowrap;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      background: rgba(13, 15, 21, 0.9);
+      border: 1.5px solid var(--line);
+      color: var(--ink-soft);
+    }
+
+    .stage-note.show {
+      display: inline-flex;
+    }
+
+    .stage-note.bad {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .stage-note svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .stage-load {
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: var(--board);
+      color: var(--ink-soft);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    #stage.loading .stage-load {
+      display: flex;
+    }
+
+    .dots {
+      display: flex;
+      gap: 9px;
+    }
+
+    .dots i {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+
+    .dots i:nth-child(1) {
+      background: var(--r);
+    }
+
+    .dots i:nth-child(2) {
+      background: var(--g);
+      animation-delay: 0.15s;
+    }
+
+    .dots i:nth-child(3) {
+      background: var(--b);
+      animation-delay: 0.3s;
+    }
+
+    @keyframes dotPulse {
+
+      0%,
+      100% {
+        transform: scale(0.6);
+        opacity: 0.45;
+      }
+
+      50% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Win washes */
+    .pwash {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .bwash {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* Inventory */
+    .tray {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(var(--n, 3), 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .ti {
+      appearance: none;
+      position: relative;
+      color: var(--ink);
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 7px 4px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: border-color 140ms ease, background-color 140ms ease, opacity 140ms ease;
+    }
+
+    .ti:hover {
+      border-color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, var(--ink) 18%);
+    }
+
+    .ti .ic svg {
+      width: 38px;
+      height: 38px;
+      display: block;
+    }
+
+    .ti .nm {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    .ti .ct {
+      position: absolute;
+      top: -7px;
+      right: -4px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 11px;
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 800;
+      font-size: 0.75rem;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .ti.sel {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 1px var(--ink);
+    }
+
+    .ti.none {
+      cursor: default;
+      border-style: dashed;
+      background: transparent;
+    }
+
+    .ti.none:hover {
+      border-color: var(--line);
+      background: transparent;
+    }
+
+    .ti.none .ic {
+      opacity: 0.38;
+    }
+
+    .ti.none .ct {
+      background: var(--surface);
+      color: var(--ink-soft);
+      border: 1.5px solid var(--line);
+      line-height: 19px;
+    }
+
+    .ti.none .ct svg {
+      width: 11px;
+      height: 11px;
+      vertical-align: -1px;
+    }
+
+    .tray.drop .ti {
+      border-color: var(--ink-soft);
+    }
+
+    .tray.locked .ti {
+      cursor: default;
+    }
+
+    /* Target colors, above the board */
+    .targets {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      margin-bottom: 30px;
+    }
+
+    .tlabel {
+      flex: none;
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+    }
+
+    .tchip {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 36px;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 11px;
+      border: 1.5px solid rgba(255, 255, 255, 0.38);
+      font-weight: 800;
+      font-size: var(--tfs, 0.86rem);
+      white-space: nowrap;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+
+    .targets.n1 .tchip {
+      flex: 0 1 auto;
+      padding: 0 18px;
+    }
+
+    .tchip svg {
+      width: 13px;
+      height: 13px;
+      flex: none;
+    }
+
+    .tchip.ok {
+      border-color: #fff;
+      box-shadow: 0 0 0 1px #fff;
+    }
+
+    .ghost {
+      position: fixed;
+      z-index: 90;
+      pointer-events: none;
+      opacity: 0.94;
+      transform: translate(-50%, -50%);
+    }
+
+    .ghost svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 120;
+      max-width: calc(100vw - 32px);
+      transform: translate(-50%, 12px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 11px 16px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      color: var(--ink);
+      font-size: 0.86rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px var(--shadow);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* Modal Chrome UI */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      max-height: calc(100vh - 40px);
+      max-height: calc(100dvh - 40px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 20px 50px var(--shadow);
+      animation: modalIn 170ms ease-out;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.985);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .modal:focus {
+      outline: none;
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .modal p {
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .menu-header h2 {
+      margin: 0;
+    }
+
+    .hub-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-decoration: none;
+    }
+
+    .hub-link:hover {
+      color: var(--ink);
+      text-decoration: underline;
+    }
+
+    .icon-btn-round {
+      appearance: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex: none;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 140ms ease;
+    }
+
+    .icon-btn-round:hover {
+      border-color: var(--ink-soft);
+    }
+
+    .daily-btn {
+      width: 100%;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-radius: 13px;
+      border: 1.5px solid var(--ink);
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 6px;
+      transition: opacity 140ms ease;
+    }
+
+    .daily-btn:hover {
+      opacity: 0.9;
+    }
+
+    .menu-sub {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin: 6px 0 10px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .modal p.menu-sub {
+      margin: 6px 0 10px;
+      line-height: 1.4;
+    }
+
+    .menu-tools {
+      display: flex;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .menu-tools .icon-btn {
+      flex: 1;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .difficulty {
+      display: flex;
+      gap: 6px;
+    }
+
+    .diff-btn {
+      flex: 1;
+      appearance: none;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.85rem;
+      font-weight: 600;
+      height: var(--menu-btn-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+    }
+
+    .diff-btn:hover {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    .diff-btn.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+
+    .share-card {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--panel);
+    }
+
+    .brand-tag {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0 0 8px;
+    }
+
+    .share-card h2 {
+      margin-bottom: 14px;
+    }
+
+    .swatch-block {
+      margin: 4px 0 16px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1.5px solid var(--ink);
+      border-radius: 14px;
+    }
+
+    .score-label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .swatches {
+      display: flex;
+      gap: 10px;
+    }
+
+    .swatch-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .swatch {
+      height: 92px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .swatch-val {
+      margin-top: 9px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.92rem;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .win-stats {
+      display: flex;
+      gap: 10px;
+      margin: 0 0 16px;
+    }
+
+    .stat {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--ink);
+      margin-top: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-sub {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+      margin-top: 3px;
+    }
+
+    .win-note {
+      margin: -4px 0 0 !important;
+      text-align: center;
+      font-size: 0.84rem !important;
+    }
+
+    .win-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stats-line {
+      margin: 0 0 4px !important;
+      font-size: 0.84rem !important;
+      text-align: center;
+    }
+
+    .daystrip {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .dd {
+      height: 20px;
+      border-radius: 6px;
+      border: 1.5px solid var(--line);
+    }
+
+    .dd.s {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .dd.x {
+      background: var(--surface);
+      border-style: solid;
+    }
+
+    .dd.a {
+      border-color: var(--ink-soft);
+    }
+
+    .dd.m {
+      border-style: dashed;
+      border-color: var(--line-soft);
+    }
+
+    .strip-cap {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    /* Rules */
+    .rules-modal {
+      max-width: 400px;
+    }
+
+    .rule {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 6px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .rule:first-of-type {
+      border-top: 0;
+      padding-top: 4px;
+    }
+
+    .rule .demo {
+      flex: 0 0 104px;
+    }
+
+    .rule .demo svg {
+      width: 104px;
+      height: 104px;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .rule h3 {
+      margin: 0 0 4px;
+      font-size: 0.8rem;
+    }
+
+    .modal .rule p {
+      margin: 0;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .rules-lead {
+      margin: 0 0 8px !important;
+      font-size: 0.84rem !important;
+    }
+
+    .rules-h {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 14px 0 6px;
+      font-weight: 700;
+    }
+
+    ul.tips {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+
+    ul.tips li {
+      margin: 5px 0;
+    }
+
+    ul.tips b {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    @media (max-width: 420px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .rule .demo {
+        flex-basis: 76px;
+      }
+
+      .rule .demo svg {
+        width: 76px;
+        height: 76px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .modal,
+      .pc.pop,
+      .pc.rot,
+      .pc.zap,
+      .dots i {
+        animation: none;
+      }
+
+      .pc.ignite {
+        animation: none;
+      }
+
+      * {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  
+    /* Hint: the piece that was just placed glows briefly */
+    .pc.hint { animation: pcPop 220ms ease-out, hintGlow 1300ms ease-out; z-index: 3; }
+    @keyframes hintGlow {
+      0% { filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
+      25% { filter: drop-shadow(0 0 12px #fff) brightness(1.5); }
+      100% { filter: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .pc.hint { animation: none; } }
+  </style>
+</head>
+
+<body>
+
+  <!-- shared SVG defs (gradients, glow filters) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="gMirror" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#8e9acb" />
+        <stop offset=".5" stop-color="#eef1ff" />
+        <stop offset="1" stop-color="#7f8bbd" />
+      </linearGradient>
+      <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".22" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity=".04" />
+      </linearGradient>
+      <pattern id="pHatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="10" fill="#151926" />
+        <line x1="0" y1="0" x2="0" y2="10" stroke="#39405c" stroke-width="4" />
+      </pattern>
+      <filter id="fGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="9" />
+      </filter>
+      <filter id="fSoft" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="game">
+    <div class="col">
+      <header>
+        <div class="header-top">
+          <h1>
+            <img class="brand-logo" alt="" aria-hidden="true"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230D0F15'/%3E%3Cline x1='5' y1='35' x2='19' y2='35' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3Cpolygon points='30,12 48,46 12,46' fill='none' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3Cline x1='41' y1='29' x2='59' y2='20' stroke='%23ff5468' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='43' y1='35' x2='60' y2='35' stroke='%233ddc97' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='44' y1='41' x2='59' y2='50' stroke='%235b8cff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+            Prism
+          </h1>
+          <div class="header-actions">
+            <button class="icon-btn header-btn" id="addHomeBtn" type="button" aria-label="Install app" title="Install Prism">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M12 3v13" />
+                <path d="M7 11l5 5 5-5" />
+                <path d="M5 21h14" />
+              </svg>
+            </button>
+            <button class="icon-btn header-btn" id="rulesBtn" type="button">Rules</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="targets" id="targets" aria-label="Target colors"></div>
+
+      <div class="play">
+        <div id="stage">
+          <div id="cells"></div>
+          <svg id="beams" viewBox="0 0 600 600" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div id="pieces"></div>
+          <svg id="labels" viewBox="0 0 600 600" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <svg id="fx" viewBox="0 0 600 600" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="stage-load" id="stageLoad">
+            <div class="dots"><i></i><i></i><i></i></div><span>Building puzzle…</span>
+          </div>
+        </div>
+        <div class="stage-note" id="stageNote" role="status" aria-live="polite"></div>
+        <div class="tray" id="tray" aria-label="Inventory"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn icon-only" id="menuToggleBtn" type="button" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="4" y1="7" x2="20" y2="7" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="17" x2="20" y2="17" />
+          </svg>
+        </button>
+        <button class="btn icon-only holdable" id="resetBtn" type="button" aria-label="Reset board (hold)"
+          title="Hold to reset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1" />
+            <path d="M3.5 4v5h5" />
+          </svg>
+        </button>
+        <button class="btn icon-only" id="solutionBtn" type="button" aria-label="Hint" title="Hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M9 18h6" />
+            <path d="M10 21h4" />
+            <path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" />
+          </svg>
+        </button>
+        <button class="btn icon-only" id="rgbBtn" type="button" aria-label="Show beam values" aria-pressed="true"
+          title="Beam values">
+          <span class="rgbtxt" aria-hidden="true"><i>r</i><i>g</i><i>b</i></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU MODAL -->
+  <div class="modal-overlay" id="menuOverlay" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>Prism</h2>
+        <button class="icon-btn-round" id="menuCloseBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <button class="daily-btn" id="dailyBtn" type="button">Daily Puzzle</button>
+      <p class="menu-sub" id="menuSub">Or choose a difficulty:</p>
+      <div class="difficulty" id="menuDifficulty">
+        <button class="diff-btn" data-difficulty="easy" type="button">Easy</button>
+        <button class="diff-btn" data-difficulty="medium" type="button">Medium</button>
+        <button class="diff-btn" data-difficulty="hard" type="button">Hard</button>
+      </div>
+      <div class="menu-tools">
+        <button class="icon-btn" id="menuRulesBtn" type="button">Rules</button>
+        <button class="icon-btn" id="menuStatsBtn" type="button">Statistics</button>
+      </div>
+      <a class="hub-link" href="https://quickcardboard.com">← Back to QuickCardboard</a>
+    </div>
+  </div>
+
+  <!-- RULES MODAL -->
+  <div class="modal-overlay" id="rulesOverlay" role="dialog" aria-modal="true" aria-label="How to play">
+    <div class="modal rules-modal">
+      <div class="menu-header">
+        <h2>How to play</h2>
+        <button class="icon-btn-round" id="rulesCloseBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div id="rulesBody"></div>
+    </div>
+  </div>
+
+  <!-- WIN MODAL -->
+  <div class="modal-overlay" id="winOverlay" role="dialog" aria-modal="true" aria-label="Puzzle solved">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>Solved!</h2>
+        <button class="icon-btn-round" id="winCloseBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div id="winCard" class="share-card">
+        <span class="brand-tag" id="winTag">Prism</span>
+        <div class="swatch-block">
+          <span class="score-label" id="winSwatchLabel">Final color</span>
+          <div class="swatches" id="winSwatches"></div>
+        </div>
+        <div class="win-stats">
+          <div class="stat"><span class="stat-label">Time</span><span class="stat-value" id="winTime">0:00</span></div>
+          <div class="stat"><span class="stat-label">Pieces used</span><span class="stat-value" id="winPieces">0 /
+              0</span></div>
+        </div>
+        <p class="win-note" id="winNote"></p>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="shareBtn" type="button">Share</button>
+        <button class="btn" id="winNewBtn" type="button">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS MODAL -->
+  <div class="modal-overlay" id="statsOverlay" role="dialog" aria-modal="true" aria-label="Statistics">
+    <div class="modal">
+      <div id="statsCard" class="share-card">
+        <span class="brand-tag">Prism</span>
+        <h2>Daily Stats</h2>
+        <div class="win-stats">
+          <div class="stat"><span class="stat-label">Attempted streak</span><span class="stat-value"
+              id="stAtt">0</span><span class="stat-sub" id="stAttBest">best 0</span></div>
+          <div class="stat"><span class="stat-label">Solved streak</span><span class="stat-value"
+              id="stSol">0</span><span class="stat-sub" id="stSolBest">best 0</span></div>
+          <div class="stat"><span class="stat-label">Solve rate</span><span class="stat-value" id="stPct">0%</span><span
+              class="stat-sub" id="stCount">0 of 0</span></div>
+        </div>
+        <p class="stats-line" id="stLine">Last 14 days</p>
+        <div class="daystrip" id="dayStrip"></div>
+        <div class="strip-cap"><span>14 days ago</span><span>Today</span></div>
+      </div>
+      <div class="win-actions">
+        <button class="btn" id="statsShareBtn" type="button">Share</button>
+        <button class="btn" id="statsBackBtn" type="button">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM (solution on the daily) -->
+  <div class="modal-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-label="Use a hint">
+    <div class="modal">
+      <div class="menu-header">
+        <h2>Use a hint?</h2>
+        <button class="icon-btn-round" id="confirmCloseBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <p>A hint removes any misplaced pieces and places one correct piece. Using one means today's daily puzzle will count as not solved, though you can still finish it.</p>
+      <div class="win-actions" style="margin-top:0">
+        <button class="btn" id="confirmYes" type="button">Use hint</button>
+        <button class="btn" id="confirmNo" type="button">Keep playing</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    const E = (() => {
+      /* PRISM engine — pure logic, no DOM. Shared by the page and the node tests. */
+      const N = 6;
+      const DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];        // 0=E 1=S 2=W 3=N
+      const RULES = {
+        splitGain: 1,                          // 1 = duplicate (your diagram), 0.5 = energy-conserving
+        targetSingle: true
+      };                  // true = exactly one beam may enter the target (your diagram)
+
+      /* ---------- seeded RNG (deterministic across browsers) ---------- */
+      function makeRng(seed) {
+        let h = 1779033703 ^ seed.length;
+        for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+        h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16;
+        let a = h >>> 0;
+        const r = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+        r.int = (lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+        r.pick = a2 => a2[Math.floor(r() * a2.length)];
+        r.shuffle = a2 => { for (let i = a2.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1));[a2[i], a2[j]] = [a2[j], a2[i]]; } return a2; };
+        return r;
+      }
+
+      const to255 = v => Math.min(255, Math.round(v * 256));   // 1.0 -> 255, 0.5 -> 128, 0.75 -> 192
+      const colorStr = c => c.map(to255).join(',');
+      const sameColor = (a, b) => Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9 && Math.abs(a[2] - b[2]) < 1e-9;
+
+      /* ---------- simulator ----------
+         board: array(36) of null | {t,r}.  t: E emitter, T target, W wall, M mirror, D dimmer, S splitter, P prism
+         A "link" is a beam leaving cell (x,y) in direction d; key = (y*6+x)*4+d. Structure is discovered first, then
+         values are pushed through in topological order, so merges/clamps are exact and feedback loops are detected.
+         NOTE: returns shared scratch arrays; consume the result before calling simulate() again. */
+      const K = 144; let _n = 0;
+      const ID = 0, HALF = 1, SPL = 2, CH0 = 3, CH1 = 4, CH2 = 5;
+      const V = new Float64Array(K * 3), INDEG = new Int8Array(K), SCNT = new Uint8Array(K), PCNT = new Uint8Array(K);
+      const STO = new Int16Array(K * 3), SF = new Uint8Array(K * 3), PRED = new Int16Array(K * 3);
+      const FL = new Uint8Array(K), Q = new Int16Array(K), STK = new Int16Array(K), SEEN = new Uint8Array(K);
+      const LITN = new Uint8Array(36), LITK = new Int16Array(36 * 4), REL = new Uint8Array(36);
+      const TIN = new Float64Array(36 * 3), THIT = new Uint8Array(36);
+      const F_EXIT = 1, F_HIT = 2, F_STOP = 4, F_REL = 8;
+      function simulate(board) {
+        let ei = -1;
+        for (let i = 0; i < 36; i++) if (board[i] && board[i].t === 'E') { ei = i; break; }
+        SEEN.fill(0); FL.fill(0); SCNT.fill(0); PCNT.fill(0); INDEG.fill(0); LITN.fill(0); REL.fill(0); TIN.fill(0); THIT.fill(0);
+        let qn = 0;
+        const startKey = ei * 4 + board[ei].r;
+        Q[qn++] = startKey; SEEN[startKey] = 1;
+        for (let qi = 0; qi < qn; qi++) {
+          const key = Q[qi], d = key & 3, cell = key >> 2, x = cell % N, y = (cell / N) | 0;
+          const bx = x + DX[d], by = y + DY[d];
+          if (bx < 0 || bx >= N || by < 0 || by >= N) { FL[key] |= F_EXIT; continue; }
+          const c = board[by * N + bx], bi = by * N + bx;
+          const add = (dd, f) => {
+            const s = bi * 4 + dd;
+            if (!SEEN[s]) { SEEN[s] = 1; Q[qn++] = s; }
+            const j = key * 3 + SCNT[key]++; STO[j] = s; SF[j] = f;
+            INDEG[s]++; PRED[s * 3 + PCNT[s]++] = key;
+          };
+          if (!c) { add(d, ID); continue; }
+          switch (c.t) {
+            case 'W': case 'E': FL[key] |= F_STOP; break;
+            case 'T': FL[key] |= F_HIT; break;
+            case 'M': add((c.r & 1) ? (d ^ 1) : (3 - d), ID); break;
+            case 'D': add(d, HALF); break;
+            case 'S': if (d === c.r) { add((c.r + 1) & 3, SPL); add((c.r + 3) & 3, SPL); } else FL[key] |= F_STOP; break;
+            case 'P':
+              if (d === c.r) { add((c.r + 3) & 3, CH0); add(c.r, CH1); add((c.r + 1) & 3, CH2); }
+              else add((c.r + 2) & 3, ID);
+              break;
+          }
+        }
+        for (let q = 0; q < qn; q++) { const k = Q[q]; V[k * 3] = V[k * 3 + 1] = V[k * 3 + 2] = 0; }
+        V[startKey * 3] = V[startKey * 3 + 1] = V[startKey * 3 + 2] = 1;
+        let sp = 0, done = 0; STK[sp++] = startKey;
+        while (sp) {
+          const k = STK[--sp]; done++;
+          const o = k * 3;
+          if (V[o] > 1) V[o] = 1; if (V[o + 1] > 1) V[o + 1] = 1; if (V[o + 2] > 1) V[o + 2] = 1;
+          if (FL[k] & F_HIT) {
+            const dd = k & 3, cc = k >> 2, nc = (((cc / N) | 0) + DY[dd]) * N + (cc % N) + DX[dd];
+            TIN[nc * 3] += V[o]; TIN[nc * 3 + 1] += V[o + 1]; TIN[nc * 3 + 2] += V[o + 2];
+            if (V[o] > 0 || V[o + 1] > 0 || V[o + 2] > 0) THIT[nc]++;
+          }
+          for (let a = 0; a < SCNT[k]; a++) {
+            const j = k * 3 + a, s = STO[j], f = SF[j], so = s * 3;
+            if (f === ID) { V[so] += V[o]; V[so + 1] += V[o + 1]; V[so + 2] += V[o + 2]; }
+            else if (f === HALF) { V[so] += V[o] * 0.5; V[so + 1] += V[o + 1] * 0.5; V[so + 2] += V[o + 2] * 0.5; }
+            else if (f === SPL) { const g = RULES.splitGain; V[so] += V[o] * g; V[so + 1] += V[o + 1] * g; V[so + 2] += V[o + 2] * g; }
+            else { const c = f - CH0; V[so + c] += V[o + c]; }
+            if (--INDEG[s] === 0) STK[sp++] = s;
+          }
+        }
+        const feedback = done < qn;
+        for (let c = 0; c < 108; c++) if (TIN[c] > 1) TIN[c] = 1;
+        const nz = k => V[k * 3] > 0 || V[k * 3 + 1] > 0 || V[k * 3 + 2] > 0;
+        for (let q = 0; q < qn; q++) {
+          const k = Q[q]; if (!nz(k)) continue;
+          const d = k & 3, cell = k >> 2, bx = (cell % N) + DX[d], by = ((cell / N) | 0) + DY[d];
+          if (bx >= 0 && bx < N && by >= 0 && by < N) { const bi = by * N + bx; LITK[bi * 4 + LITN[bi]++] = k; }
+        }
+        let sn = 0;
+        for (let q = 0; q < qn; q++) { const k = Q[q]; if ((FL[k] & F_HIT) && nz(k)) { FL[k] |= F_REL; STK[sn++] = k; } }
+        while (sn) {
+          const k = STK[--sn];
+          for (let a = 0; a < PCNT[k]; a++) { const p = PRED[k * 3 + a]; if (!(FL[p] & F_REL) && nz(p)) { FL[p] |= F_REL; STK[sn++] = p; } }
+        }
+        for (let q = 0; q < qn; q++) {
+          const k = Q[q]; if (!(FL[k] & F_REL)) continue;
+          const d = k & 3, cell = k >> 2, bx = (cell % N) + DX[d], by = ((cell / N) | 0) + DY[d];
+          if (bx >= 0 && bx < N && by >= 0 && by < N) REL[by * N + bx] = 1;
+        }
+        _n = qn;
+        const targets = [];
+        for (let i = 0; i < 36; i++) if (board[i] && board[i].t === 'T') targets.push({ i, k: board[i].k || 0, tin: [TIN[i * 3], TIN[i * 3 + 1], TIN[i * 3 + 2]], hits: THIT[i] });
+        return { n: qn, feedback, startKey, targets };
+      }
+      /* readers for the scratch state left by the most recent simulate() */
+      const linkV = k => [V[k * 3], V[k * 3 + 1], V[k * 3 + 2]];
+      const isLit = i => LITN[i] > 0;
+      const isRel = i => REL[i] === 1;
+      function litLinks(i) { const out = []; for (let a = 0; a < LITN[i]; a++) { const k = LITK[i * 4 + a]; out.push({ key: k, d: k & 3, v: linkV(k), rel: !!(FL[k] & F_REL) }); } return out; }
+      const linkRel = k => SEEN[k] === 1 && !!(FL[k] & F_REL);
+      const linkVal = k => SEEN[k] === 1 ? linkV(k) : null;
+      function linkTargets(key) {   // set of target cells a beam can still reach
+        const seen = new Set(), out = new Set(), st = [key];
+        while (st.length) {
+          const k = st.pop(); if (seen.has(k)) continue; seen.add(k);
+          if (FL[k] & F_HIT) { const d = k & 3, c = k >> 2; out.add((((c / N) | 0) + DY[d]) * N + (c % N) + DX[d]); }
+          for (let a = 0; a < SCNT[k]; a++) st.push(STO[k * 3 + a]);
+        }
+        return out;
+      }
+      function beams() {   // every non-zero link, for drawing
+        const out = [];
+        for (let q = 0; q < _n; q++) { const k = Q[q]; if (V[k * 3] > 0 || V[k * 3 + 1] > 0 || V[k * 3 + 2] > 0) { const cell = k >> 2; out.push({ key: k, x: cell % N, y: (cell / N) | 0, d: k & 3, v: linkV(k), exit: !!(FL[k] & F_EXIT), hit: !!(FL[k] & F_HIT), stop: !!(FL[k] & F_STOP) }); } }
+        return out;
+      }
+
+      /* ---------- helpers ---------- */
+      const cloneBoard = b => b.map(c => c ? { ...c } : null);
+      const idx = (x, y) => y * N + x;
+      const litEmptyCells = board => { const out = []; for (let i = 0; i < 36; i++) if (!board[i] && isLit(i)) out.push(i); return out; };
+      const crossingCells = board => { const out = []; for (let i = 0; i < 36; i++) if (!board[i] && LITN[i] >= 2 && new Set(litLinks(i).map(l => l.d)).size >= 2) out.push(i); return out; };
+
+      /* ---------- logical minimum ----------
+         Geometry-free search: the fewest non-mirror pieces (dimmer, splitter, prism) needed to turn one white beam into a
+         given single beam IF every piece is used once. It does not allow a piece to be reused (for example a dimmer where two
+         beams cross), so a clever layout can dip below it. It is what stops "two dimmers solve your seven-piece puzzle".
+         The table for the default rules is precomputed (it takes about half a second to build). */
+      const SC = 64, ABS_DEPTH = 8, ABS_BEAMS = 5, ABS = {};
+      const ABS_DATA = { 1: { k: 'mngg,bbq8,1s,6bk,mh34,5nv4,w,35s,b8jk,6dc,mh4w,mneo,2txk,g,1kw,5m9s,36o,b8kg,bbpc,6cg,mnfk,mh40,37k,mkao,mk8w,beww,b8lc,bev4,1eys,8,sg,2t4w,1lc,5ma8,5nuo,gzlc,bbr4,bew0,mk9s,368,bbps,b8k0,1ls,ba5c,ba4g,5pgg,5mao,5pfk,6c0,mnf4,mh3k,1mo,mips,mio0,5sn4,5mbk,5slc,phe,4,e8,1ekg,so,2t54,2txc,8hso,5nvk,5pg0,ba4w,1l4,5nuw,5ma0,sw,5n2o,5n28,2uq8,2t5c,2ups,e5ns,bdbk,gy0g,bbqo,gzkw,bdb4,gy00,5r1s,5nw0,gwfk,5r0w,gzkg,gweo,1c,4qo,gutc,bewg,mka8,bdc0,mluo,gy0w,h15s,360,bbpk,b8js,374,b8kw,tc,b9cw,b9c0,4rk,bda8,2wbk,2t5s,2wao,guu8,gxz4,5nwg,5sls,miog,6bs,mnew,mh3c,mk9c,bevk,6cw,mh4g,miow,5sm8,u8,mhxc,mhvk,ba68,4sg,mlts,5phc,2zi8,2t6o,2zgg,guv4,h14w,cqp,2,74,pa8,ec,1ekk,1eyo,48wc,2txs,2uq0,5n2g,sk,2txg,2t50,eg,2tjc,2tj4,1fd4,1eko,1fcw,72tw,5ons,8h08,5nvc,8hsg,5onk,8h00,2viw,2ty0,8g7s,2vig,8hs8,8g7c,o,2dc,8feo,5pg8,ba54,5oo0,baxc,8h0g,8ikw,1l0,5nus,5m9w,1lk,5mag,eo,5mog,5mo0,2ds,5on4,1g5s,1ekw,1g5c,8ff4,8gzk,cqp0,bciw,e4vc,bbqg,e5nk,bcio,e4v4,2x48,2tyg,e2i0,2x3c,e5mw,e2h4,14,3y8,e1og,jtiw,gzls,h168,mlv4,bdbc,gy08,bcj4,gysg,e4vk,e6g0,5r1c,gwf4,5pgw,gxzk,ba5s,bdao,4s0,guuo,gzk0,bew8,mka0,mng0,bcjk,ml28,mlvk,e4w0,e80w,h16o,35w,bbpg,b8jo,ba4o,5pfs,36g,b8k8,b9cg,4r4,2wb4,guts,36w,b8ko,1m8,5mb4,f4,b8yo,b8xs,5n34,2e8,baww,2uqo,gwe8,3z4,bchs,5r0g,1hr4,1elc,1hq8,8ffk,8ikg,e1pc,e4u8,b9c8,2waw,2ty8,2tz4,2zgo,mhvs,5smo,mipc,5r28,mlu8,gwg0,h15c,6bo,mnes,mh38,mk94,bevc,6c8,mh3s,6co,mh48,mhwg,2zhc,mio8,5slk,g0,mhj4,mhhc,b9ds,2f4,mjgg,400,ml1c,2wcg,mhw0,5n40,1kxs,1em8,1kw0,8fgg,8lq8,e1q8,e800,2zgw,2urk,1,3k,cn4,76,paa,phc,24g6,1eyw,1fd0,2tj8,ea,1eyq,1eki,78,1ero,1erk,pok,pac,pog,3jey,2ubw,48i4,2txo,48w8,2ubs,48i0,1frg,1ez0,483w,1fr8,48w4,483o,c,16o,47pc,2uq4,5n2k,2uc0,5ngo,48i8,49ag,si,2txe,2t4y,ss,2t58,7c,2tc8,2tc0,16w,2ubk,q2w,pag,q2o,47pk,48hs,6dci,5o9g,72fo,5nv8,72ts,5o9c,72fk,1gk4,1ez8,7190,1gjo,72tg,718k,k,1z4,70u8,9wrg,8hsw,8il4,baxk,5ono,8h04,5o9k,8he8,72fs,7380,8ht4,8jdk,e42g,2vio,8g7k,2uqg,8gzs,5n2w,5onc,2e0,8ffc,8hs0,5pg4,ba50,bbq0,5nvs,5o9s,baj4,baxs,5q8g,72g0,740g,8ilc,e39s,1ky,5nuq,5m9u,5n2c,2upw,1l8,5ma4,5mo8,2dk,1g5k,8few,1lg,5mac,t4,2t5k,7k,5mhc,5mgw,2tjk,174,5ngg,1fdc,8g74,1zk,5o8w,2vi8,qvk,pao,qv4,47ps,49a8,70uo,72f4,5mo4,1g5g,1ez4,c17m,bc4k,cqas,bbqc,cqow,bc4g,cqao,1i5g,1ezo,cnj8,1i4k,cqo4,cnic,10,3k0,cn40,fkmk,e5o0,e6g8,gyso,bcis,e4v8,bc4o,e59c,cqaw,cr34,e5og,e814,ml2g,2x3s,e2hk,2vjc,e420,8g88,8jd4,3zc,e1pk,e5mo,iek4,gzlk,h0ds,jsq8,e5o8,e78o,jrxk,8htk,8kyg,jqc8,1k,5j4,jny8,bdb8,gy04,gzl4,bbqw,bc4w,gye8,gysw,be3k,cqb4,crvk,e6gg,jr4w,5r14,gwew,5oog,gx74,8h0w,8k5s,e5nc,e42w,8je0,4rc,gzko,guu0,2eo,gx80,gx6o,8k6o,8fg0,8k5c,bew4,mk9w,mnfs,mluw,gxzs,h160,bdaw,bc5c,mko0,ml34,ml2o,gx7k,gytc,bay8,cqbk,ctgg,e81s,e81c,8k68,e6gw,8ils,2x3k,e5n4,e2hc,2uqw,e3ag,e39k,5q94,5n3c,5q88,35u,bbpe,b8jm,ba4k,5pfo,364,b8jw,4qw,gutk,36c,b8k4,b8y8,3yo,bdag,5r0o,1hqo,e1ow,gweg,gxzc,b9c4,2was,36s,b8kk,1m0,5maw,ts,2t68,ba5k,5pgo,b9dc,5n3k,2ur4,2wc0,tk,b9d4,2wbs,2t60,80,b8rk,b8qo,5mow,17k,b9q8,gvls,200,baio,1g68,e39c,gvm8,gvmo,b8y0,2tk0,3kw,bc3k,5q80,2xvk,bci8,5q8w,2xw0,2xwg,3yg,bci0,2x40,2x34,sgw,pb4,sg0,47q8,4av4,70v4,7400,1hqg,1fds,cn4w,cq9s,e4uo,e3a8,e4ug,e1oo,e2hs,e2gw,b8xw,1hqc,1ezk,1f0g,1kw4,mhhg,2zhk,mhwo,2x4w,ml1k,e2io,e808,8hts,8lqw,mjh4,2wbc,b9co,2vj4,bax4,8g80,8iko,6bm,mneq,mh36,mk90,bev8,6bw,mh3g,6c4,mh3o,mnfc,mk9k,bevs,mio4,5slg,6ck,mh44,mip4,5smg,mhi8,1kww,mhvo,mlug,2zgk,h15k,8w,mhc0,mha8,b8zk,18g,mi9s,20w,mj28,mji8,mjhc,bayo,mhhs,5mps,3ls,mkn4,ml1s,5q9s,1hs0,mhhk,mjhs,2tkw,gx8g,vnk,pc0,vls,47r4,4e0w,70w0,775s,8ls0,8lr4,8im8,1kwg,1g74,cn5s,ctfk,e80g,e3b4,1kw8,8lrk,1feo,8k74,3l,cn5,cqo,1283,phg,poi,1erm,75,phd,pa9,3m,pdu,pds,cua,cn6,cu8,1rph,1f5y,2492,1eyu,24g4,1f5w,2490,pvq,phi,241y,pvm,24g2,241u,6,lc,23uo,1fd2,2tja,1f60,2tqc,2494,24n8,e9,1eyp,1ekh,ee,1ekm,3o,1eo4,1eo0,lg,1f5s,d1g,cn8,d1c,23us,248w,36o9,2u4q,3j7u,2txm,3jew,2u4o,3j7s,qa2,phm,3imi,q9u,3jeq,3ima,a,zk,3if4,4ydq,48wg,49ak,5ngs,2ubu,48i2,2u4s,48p4,3j7w,3jm0,48wk,49os,7218,1frc,483s,1fd8,48hw,2tjg,2ubo,170,47po,48w0,2uq2,5n2i,5nv0,2txw,2u4w,5n9k,5ngw,2v48,3j80,3k08,49ao,71mw,sh,2txd,2t4x,2tj6,1fcy,sm,2t52,2tc4,16s,q2s,47pg,sq,2t56,ek,1eks,3s,2t8o,2t8g,1ers,lk,2tq8,poo,483k,zs,2u4g,1fr4,dfs,cnc,dfk,23uw,24n4,3ifc,3j7k,2tc2,q2q,phk,60lt,5o2a,6d5e,5nv6,6dcg,5o28,6d5c,r2q,phu,6brm,r2a,6dc2,6br6,i,1s0,6bk0,7sba,72u0,7384,8hec,5o9e,72fm,5o2c,72mo,6d5g,6djk,72uc,74es,cp3o,1gjw,718s,1fro,7210,4844,49ok,1zo,70us,72tc,97a2,8hss,8i6w,9wd4,72u4,73mc,9vys,48ws,4ah8,9v64,s,2rk,9tz4,5onm,8h02,8hsk,5nvg,5o2g,8h74,8heg,5p1s,6d5k,6dxs,7388,9vkg,2vik,8g7g,2uc8,8glk,48ig,4a2w,72to,721g,49p0,8htc,8k60,gx7c,2do,8hsc,8ff0,17c,8gm0,8glc,4a3c,47q0,4a2o,8jds,e42o,8ilk,e4uw,bay0,bcig,5pg2,ba4y,bbpw,baxg,8gzw,8il0,5ong,5nvo,5oo8,8h0o,5o2o,bac0,bajk,bajc,8gls,8heo,5nh4,5pu8,5q8o,8jdc,6d5s,6eq8,740w,740o,4a34,738g,49aw,copc,e3a0,e428,baj8,740k,1gjs,72tk,718o,8je8,e434,72u8,1fdg,71n8,71ms,8k6g,e6fs,2v4k,2tjo,2v44,gx7s,gys8,1kx,5nup,5m9t,5n2a,2upu,1l2,5m9y,2dg,8fes,1l6,5ma2,5mh4,1zc,5on8,2vic,qvc,70ug,8g78,8gzo,5mo2,1g5e,1le,5maa,t0,2t5g,ew,1el4,5n2s,2uqc,5moo,2tjs,1fdk,1g60,es,5mok,2eg,1g5w,1el0,8ffs,40,5mds,5mdc,2tcg,ls,5mv4,8fsw,100,5n9c,q34,71mo,8ft4,8ftc,5mh0,1es0,1sg,5o1s,2v40,1gxs,5o94,2v4g,1gy0,1gy8,1z8,5o90,3yw,1gk0,1gjk,8jcw,e8g,cnk,e80,23v4,25fk,3ifk,3k00,qv8,pow,6bkg,6d4w,72fc,71n4,72f8,70uc,e1p4,718w,718g,e41s,5mgy,qv6,phs,bogx,bbxe,c10i,bbqa,c17k,bbxc,c10g,so2,pia,by1u,sn6,c16q,by0y,y,3cw,bxts,dg6e,cqp4,cr38,e59g,bc4i,cqaq,bbxg,cqhs,c10k,c1eo,cqps,ctgk,mko4,1i50,cnis,1gkk,cp38,719g,74ec,3l0,cn50,cqo0,ev56,e5nw,e620,fk88,cqp8,crhg,fjtw,48x8,4c24,fhfw,18,4cg,fg8w,2xww,2tyo,gvn4,2xvs,gzk8,gvm0,bciq,e4v6,e5no,bbqk,bbxk,e528,e59k,bcww,c10o,c1sw,cr3c,fjfk,2tyw,2yo8,joqw,cqok,cp44,74f8,l8ho,3ys,e5n8,e1p0,208,e3oo,e3nk,74tk,70vc,74sg,hp2q,gzlg,gzzk,ie5s,cqpg,cs9w,icys,72us,75zo,ibdg,1g,54w,i9ds,h0e0,jsqg,jtio,e794,jry0,jtig,8kzc,jqd4,jti0,be48,jr5k,jti8,5ko,jnzs,jthc,5rug,5nw8,jpko,5rtc,jths,jpjk,2ypk,jos8,jthk,h16g,mng8,mlvc,h0e8,mmo0,mmnk,jubk,jsqo,jub4,e78w,jrxs,e6go,jsq0,gyt4,h0dk,8kyw,jqco,8jeg,jrx4,e43c,e788,bdb6,gy02,gzl0,gysk,4rs,5r1k,gwfc,guug,e6g4,bbqs,bdbs,gy0o,bcjc,e4vs,bbxs,gy74,gyeo,gyeg,3zk,5q9c,gys0,gyrk,e59s,bdpc,be40,h0dc,be3s,e78g,c10w,c2lc,crw0,e3ao,e6fk,e1ps,e6f4,crvs,cr3k,ickg,jr5c,jsps,jr54,jrxc,mmns,jubc,jtj4,gyec,8glo,crvo,4a30,cqpc,48wo,e81k,ml2w,8kyo,jqcg,e79c,mmnc,8im0,jr4o,jry8,juaw,bayg,be3c,bewo,mkag,be4g,mmn4,jr5s,juao,5r10,gwes,2vjs,2x4o,e2ig,8g8o,2vk0,8g8w,5oa8,gwsw,2yoo,2zh4,2yp4,e77s,8ky0,8lqg,72gg,75lc,mhw8,jorc,mjgo,jqbs,jors,jrwo,cob0,1i4s,cqoc,cnik,8kzk,jqdc,4b9o,1fs4,cobo,coas,8lrs,juag,48x0,4bac,484k,4b9g,mji0,mmmw,4r0,gzkc,guto,180,gw1c,gw00,4chc,47qo,4cg0,bew2,mk9u,mnfo,mlus,gxzo,h15w,bdas,gzkk,5sm0,mioo,ml2c,e39o,e810,5q8c,2x3g,e5n0,e2h8,5ph4,ba60,5r20,gwfs,5oow,8h1c,2x4g,e2i8,bby8,mkgw,mkow,mkog,gwtc,gyf4,bak0,gwts,mjgw,mko8,e2vk,e5a8,5nhk,2uco,e2w8,e2vc,5rts,be34,5ru8,h0cw,8lqo,2xwo,e6fc,c11c,c468,cthc,ctgw,75ls,crwg,741c,75m8,ctgo,4bo0,cr40,49bc,4boo,48iw,4bns,jpk0,jr4g,jpkg,jspc,gvmw,gyrs,cnwo,2wp4,1i4o,cqo8,cnig,8kz4,jqcw,2tyc,1fdw,cnxg,cnwk,8k6w,jspk,2wpw,2tk4,2wp0,gx88,h0d4,35t,bbpd,b8jl,ba4i,5pfm,35y,b8jq,4qs,gutg,362,b8ju,bbpo,ba4s,5pfw,bdac,5r0k,gwec,gxz8,b9c2,bdak,2waq,gxzg,36a,b8k2,b9ck,2wb8,b8r4,3kg,3yc,bchw,2x38,sgg,cn4g,e2h0,e4uc,e1ok,b8xu,bax8,bcic,1hqa,8iks,e4us,36q,b8ki,1lw,5mas,ba5g,5pgk,37c,b8l4,1mg,5mbc,fk,1els,b9cc,2wb0,tg,b9d0,4s8,2wbo,2t5w,guuw,b8z4,5mpc,fc,b8yw,2tk8,1g6o,1hrk,1fe0,1hrc,1elk,f8,b8ys,2ew,1hr8,1elg,8fg8,4g,b8o0,b8n4,5mhs,m8,b94w,gv7k,10g,b9j4,b9r4,b9qo,5nhc,gv80,gv8g,b8qw,b9rk,2tcw,gw0w,1sw,babk,baiw,2v4w,qw0,coow,e22w,e23k,e22o,b8qs,b9qw,bajs,1esg,8gm8,e3og,3ds,bbwg,5pts,bc40,5puo,5k0,be2o,5jk,5rsw,1jb4,3k8,bc3s,5kg,b9qg,2ucg,2wps,2wow,h0cg,1jbk,1jc0,1iiw,1ijk,1iio,3k4,bc3o,5js,1i5c,1i4g,8kxs,fts,co0,fsw,23vk,270g,3ig0,3lkw,4aw0,4avk,49b4,sg8,4awg,q3k,4cgw,6bkw,6eps,7408,71nk,sg4,4avs,7414,ppc,4a3k,74tc,bxuo,c0zk,cqa8,cops,jnz4,jr40,jnyo,jpj4,cqa0,cn48,jnzk,4avc,cnxc,cnwg,jsow,48io,cq9w,cn44,jnyw,cnj4,cni8,jqbk,b8qq,b9qk,sg2,4avg,pi8,48ww,pj4,vlu,mhaa,1kx0,mhic,1i68,mkn8,cnk0,ctfo,48xs,4e18,mia4,1hqs,b8yc,1gkg,bais,719c,7404,72v4,776c,mj2s,1g5o,5moc,1frk,5ngk,4840,49ac,6bl,mnep,mh35,mk8y,bev6,6bq,mh3a,6bu,mh3e,mnf0,mk98,bevg,mio2,5sle,6c2,mh3m,mnf8,mk9g,bevo,miok,5slw,mlu0,h154,mhvm,mlu4,2zgi,h158,6ci,mh42,6d4,mh4o,mioc,5slo,mip0,5smc,mhww,2zhs,mhwk,2zhg,mhb4,vmo,mhhe,mjgs,ml1w,1kw2,8lqk,e80k,5c,mh8g,mh6o,b8sg,n4,mhog,11c,mi2o,mibk,miao,b9s0,mhao,5mio,1ts,miv4,mj40,mj34,bakg,mj2o,5oao,gvnk,mhag,mib4,2tds,gw1s,3eo,mkg0,5kw,mmm8,mknk,mia8,5ni8,5pvk,2xxc,mknc,2wqo,shs,mhac,miag,mj3c,1etc,8gn4,e3pc,j0g,cow,iyo,23wg,2a68,3igw,3oqo,4e2o,4e1s,4aww,vm8,qww,6bls,6hvk,777k,776o,741s,7768,72gw,vm0,4e28,q4g,4chs,bxvk,c45c,jo00,ju9s,ctg0,4e1c,coqo,49c0,ctfs,cny8,vlw,4e1k,776w,pq8,4a4g,74u8', c: '011112222222333333333333333344444444444444444444444444444555555555555555555555555555555555555555555555555555555555555555555555555555555555666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666667777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888' } };
+      const enc = (r, g, b) => (r << 14) | (g << 7) | b;
+      const dec = k => [k >> 14, (k >> 7) & 127, k & 127];
+      function buildAbs(gain) {
+        const cost = new Map(), W = enc(SC, SC, SC); cost.set(W, 0);
+        let level = [[W]]; const seen = new Set([String(W)]);
+        for (let d = 1; d <= ABS_DEPTH; d++) {
+          const next = [], last = d === ABS_DEPTH;
+          const push = arr => {
+            if (arr.length > ABS_BEAMS) return;
+            arr.sort((x, y) => x - y);
+            if (last) { for (const b of arr) if (!cost.has(b)) cost.set(b, d); return; }
+            const key = arr.join(','); if (seen.has(key)) return; seen.add(key); next.push(arr);
+            for (const b of arr) if (!cost.has(b)) cost.set(b, d);
+          };
+          for (const st of level) {
+            const n = st.length;
+            for (let i = 0; i < n; i++) {
+              if (i > 0 && st[i] === st[i - 1]) continue;
+              const [r, g, bl] = dec(st[i]), rest = st.filter((_, j) => j !== i), ev = r % 2 === 0 && g % 2 === 0 && bl % 2 === 0;
+              if (ev) push([...rest, enc(r / 2, g / 2, bl / 2)]);                              // dimmer
+              if (gain === 1) push([...rest, st[i], st[i]]);                                   // splitter
+              else if (ev) { const h = enc(r / 2, g / 2, bl / 2); push([...rest, h, h]); }
+              if ((r > 0) + (g > 0) + (bl > 0) >= 2) { const o = [...rest]; if (r) o.push(enc(r, 0, 0)); if (g) o.push(enc(0, g, 0)); if (bl) o.push(enc(0, 0, bl)); push(o); }   // prism splits
+            }
+            for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {                       // prism merges 2 or 3 beams
+              const p = dec(st[i]), q = dec(st[j]), rest = st.filter((_, k) => k !== i && k !== j);
+              push([...rest, enc(Math.min(SC, p[0] + q[0]), Math.min(SC, p[1] + q[1]), Math.min(SC, p[2] + q[2]))]);
+              for (let k = j + 1; k < n; k++) {
+                const e = dec(st[k]), r3 = st.filter((_, m) => m !== i && m !== j && m !== k);
+                push([...r3, enc(Math.min(SC, p[0] + q[0] + e[0]), Math.min(SC, p[1] + q[1] + e[1]), Math.min(SC, p[2] + q[2] + e[2]))]);
+              }
+            }
+          }
+          level = next;
+        }
+        return cost;
+      }
+      function absTable(gain) {
+        if (ABS[gain]) return ABS[gain];
+        if (ABS_DATA[gain]) { const m = new Map(), d = ABS_DATA[gain]; d.k.split(',').forEach((k, i) => m.set(parseInt(k, 36), +d.c[i])); return (ABS[gain] = m); }
+        return (ABS[gain] = buildAbs(gain));
+      }
+      /* fewest non-mirror pieces for a single-beam color (n), atLeast=true when the true value is above the table depth */
+      function minPieces(color) {
+        const sc = color.map(v => v * SC);
+        if (sc.some(v => Math.abs(v - Math.round(v)) > 1e-9)) return { n: ABS_DEPTH + 1, atLeast: true };
+        const c = absTable(RULES.splitGain).get(enc(Math.round(sc[0]), Math.round(sc[1]), Math.round(sc[2])));
+        let n = c === undefined ? ABS_DEPTH + 1 : c;
+        if (!RULES.targetSingle) n = Math.max(0, n - 1);        // without the one-beam rule the final merge prism can be skipped
+        return { n, atLeast: c === undefined };
+      }
+
+      /* ---------- puzzle utilities ---------- */
+      function makeBoard(puz, player) {
+        const b = cloneBoard(puz.base);
+        puz.targets.forEach((t, k) => { b[idx(t.x, t.y)] = { t: 'T', r: 0, k, fixed: true }; });
+        for (const c of player) b[c.i] = { t: c.t, r: c.r, fixed: false };
+        return b;
+      }
+      function targetsOk(puz, sim) {
+        if (sim.feedback) return false;
+        for (const t of puz.targets) {
+          const s = sim.targets.find(q => q.i === idx(t.x, t.y));
+          if (!s || !sameColor(s.tin, t.color) || (RULES.targetSingle && s.hits > 1)) return false;
+        }
+        return true;
+      }
+      function isSolved(puz, board) { return targetsOk(puz, simulate(board)); }
+      /* how full the board is (walls excluded), how many real pieces, and the certified minimum */
+      function describe(puz) {
+        let objects = puz.targets.length + puz.ref.length, walls = 0, fixedMirrors = 0;
+        for (const c of puz.base) if (c) { if (c.t === 'W') walls++; else { objects++; if (c.t === 'M') fixedMirrors++; } }
+        const logic = puz.ref.filter(c => c.t !== 'M').length;
+        const mirrors = fixedMirrors + puz.ref.filter(c => c.t === 'M').length;
+        const costs = puz.targets.map(t => minPieces(t.color));
+        return { objects, fill: objects / 36, logic, mirrors, walls, minBound: Math.max(...costs.map(c => c.n)), atLeast: costs.some(c => c.atLeast), goals: puz.targets.length };
+      }
+
+      /* ---------- generator ----------
+         Grow a random working circuit forward from the emitter (so it is solvable by construction, with real mirrors,
+         crossings and merges), pick target cell(s) at the ends of beams, delete everything that does not feed them, then
+         accept the puzzle only if it passes the gates below. The number of attempts is fixed so a seed always gives the
+         same puzzle on every device. */
+      const GEN = {
+        one: { goals: [1, 1], grow: [22, 28], objLo: 15, objHi: 18, minLogic: 8, minCost: 6, slack: 1, needFork: false },
+        several: { goals: [2, 3], grow: [26, 34], objLo: 16, objHi: 18, minLogic: 9, minCost: 4, slack: 99, needFork: true },
+        easy: { goals: [1, 1], grow: [10, 14], objLo: 11, objHi: 15, minLogic: 5, maxLogic: 5, minCost: 4, slack: 1, needFork: false },
+      };
+      function generate(seed, opts = {}) {
+        const mode = opts.mode || 'mixed';                         // mixed | rails | free   (where the mirrors live)
+        const cfg = GEN[opts.goals === 'several' ? 'several' : opts.goals === 'easy' ? 'easy' : 'one'];
+        const rng = makeRng(seed + (opts.goals === 'several' ? '~several' : '') + (opts.goals === 'easy' ? '~easy' : ''));
+        let best = null;
+        const maxAttempts = (opts.attempts || (opts.goals === 'several' ? 9000 : 6000)) * 3; let used = 0;   // most seeds pass within the first third
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          used = attempt + 1;
+          const p = tryGenerate(rng, cfg);
+          if (!p) continue;
+          if (!best || p.viol.length < best.viol.length) best = p;
+          if (!p.viol.length) break;
+        }
+        if (best) best.used = used;
+        return best ? finalize(best, seed, mode, rng, cfg) : null;
+      }
+
+      function tryMerge(board, rng) {
+        if (simulate(board).feedback) return false;
+        const before = new Set(crossingCells(board));
+        const cells = rng.shuffle(litEmptyCells(board)).slice(0, 12);
+        for (const c of cells) for (const o of rng.shuffle([0, 1])) {
+          board[c] = { t: 'M', r: o };
+          if (!simulate(board).feedback) {
+            const xs = crossingCells(board).filter(i => !before.has(i));
+            if (xs.length) {
+              const mixed = xs.filter(q => { const sum = [0, 0, 0]; litLinks(q).forEach(l => l.v.forEach((v, c) => { sum[c] += v; })); return sum.filter(v => v > 0).length >= 2; });
+              const x = rng.pick(mixed.length && rng() < 0.85 ? mixed : xs), forbid = new Set(litLinks(x).map(l => (l.d + 2) & 3));
+              const outs = [0, 1, 2, 3].filter(k => !forbid.has(k));
+              if (outs.length) {
+                board[x] = { t: 'P', r: (rng.pick(outs) + 2) & 3 };
+                if (!simulate(board).feedback) return true;
+                board[x] = null;
+              }
+            }
+          }
+          board[c] = null;
+        }
+        return false;
+      }
+
+      function sideRoom(board, i, d) {         // a splitter needs room on both sides, otherwise it is just a mirror
+        const x = i % N, y = (i / N) | 0;
+        for (const dd of [(d + 1) & 3, (d + 3) & 3]) {
+          const nx = x + DX[dd], ny = y + DY[dd];
+          if (nx < 0 || nx >= N || ny < 0 || ny >= N) return false;
+          const c = board[ny * N + nx]; if (c && (c.t === 'W' || c.t === 'E')) return false;
+        }
+        return true;
+      }
+
+      function growTo(board, rng, gs, want) {
+        for (let step = 0; step < 200 && gs.placed < want; step++) {
+          const s = simulate(board); if (s.feedback) return false;
+          const cells = litEmptyCells(board); if (!cells.length) return true;
+          if (gs.placed > 0 && rng() < 0.3 && gs.mirrors < 8) { if (tryMerge(board, rng)) { gs.placed += 2; gs.mirrors++; continue; } simulate(board); }
+          const ci = rng.pick(cells), ls = litLinks(ci), l = rng.pick(ls), v = l.v, d = l.d;
+          const chans = v.filter(x => x > 0).length, minv = Math.min(...ls.flatMap(k => k.v.filter(x => x > 0)));
+          const opts = [];
+          if (gs.placed === 0) opts.push(['P', d]);
+          else {
+            if (chans >= 2) opts.push(['P', d], ['P', d], ['P', d]);
+            if (minv >= 0.25) opts.push(['D', 0], ['D', 0], ['D', 0]);
+            if (gs.splits < 4 && sideRoom(board, ci, d)) opts.push(['S', d], ['S', d], ['S', d]);
+            if (ls.length >= 2) {
+              const forbid = new Set(ls.map(k => (k.d + 2) & 3));
+              for (const o of [0, 1, 2, 3].filter(o => !forbid.has(o))) opts.push(['P', (o + 2) & 3], ['P', (o + 2) & 3]);
+            }
+            if (gs.mirrors < 8) opts.push(['M', rng.int(0, 1)], ['M', rng.int(0, 1)], ['M', rng.int(0, 1)], ['M', rng.int(0, 1)]);
+          }
+          if (!opts.length) continue;
+          const [t, r] = rng.pick(opts);
+          board[ci] = { t, r };
+          if (simulate(board).feedback) { board[ci] = null; continue; }
+          gs.placed++; if (t === 'M') gs.mirrors++; if (t === 'S') gs.splits++;
+        }
+        return !simulate(board).feedback;
+      }
+
+      function tryGenerate(rng, cfg) {
+        const board = new Array(36).fill(null);
+        const side = rng.int(0, 3), pos = rng.int(1, 4);
+        const em = [{ x: 0, y: pos, d: 0 }, { x: pos, y: 0, d: 1 }, { x: N - 1, y: pos, d: 2 }, { x: pos, y: N - 1, d: 3 }][side];
+        board[idx(em.x, em.y)] = { t: 'E', r: em.d };
+        for (let k = rng.int(1, 4); k > 0; k--) { const i = rng.int(0, 35); if (!board[i] && Math.abs(i % N - em.x) + Math.abs(((i / N) | 0) - em.y) > 1) board[i] = { t: 'W', r: 0 }; }
+        const gs = { placed: 0, mirrors: 0, splits: 0 }, nGoals = rng.int(cfg.goals[0], cfg.goals[1]);
+        let bestC = null;
+        for (let stage = 0; stage < 5; stage++) {                    // grow a little, test goals, grow more, test again
+          if (!growTo(board, rng, gs, cfg.grow[0] - 6 + stage * 4)) return bestC;
+          if (simulate(board).feedback) return bestC;
+          const lit = litEmptyCells(board); if (lit.length < 3) return bestC;
+          const consider = c => { if (c && (!bestC || c.viol.length < bestC.viol.length)) bestC = c; return c && !c.viol.length; };
+          if (nGoals === 1) { for (const ci of rng.shuffle(lit.slice())) if (consider(evaluate(board, [ci], cfg))) return bestC; }
+          else for (let t = 0; t < 18; t++) if (consider(evaluate(board, rng.shuffle(lit.slice()).slice(0, nGoals), cfg))) return bestC;
+          simulate(board);
+        }
+        return bestC;
+      }
+
+      /* build the candidate, prune it, repair wasted splitters, and list every gate it fails */
+      function evaluate(board, cells, cfg) {
+        let b = cloneBoard(board);
+        cells.forEach((ci, k) => { b[ci] = { t: 'T', r: 0, k }; });
+        const s1 = simulate(b); if (s1.feedback || s1.targets.length !== cells.length) return null;
+        // cheap color gates first: pruning and repairing barely change goal colors, so reject early and save the expensive steps
+        const vivid = q => { const mx = Math.max(...q), mn = Math.min(...q); return q.filter(v => v > 0).length >= 2 && (mx - mn) / mx >= 0.25; };
+        for (const t of s1.targets) {
+          if (t.hits !== 1 || t.tin.every(x => x === 0)) return null;
+          if (Math.max(...t.tin) < 0.125 || t.tin.some(v => v > 0 && v < 0.0625)) return null;
+          if (minPieces(t.tin).n < cfg.minCost) return null;
+          if (cfg.goals[1] === 1 && !vivid(t.tin)) return null;
+        }
+        if (cfg.goals[1] > 1 && !s1.targets.some(t => vivid(t.tin))) return null;
+        b = prune(b); if (!b) return null;
+        b = repairSplitters(b); if (!b) return null;
+        const s2 = simulate(b); if (s2.feedback || s2.targets.length !== cells.length) return null;
+        for (const t of s2.targets) { if (RULES.targetSingle ? t.hits !== 1 : t.hits < 1) return null; if (t.tin.every(x => x === 0)) return null; }
+        for (let i = 0; i < s2.targets.length; i++) for (let j = i + 1; j < s2.targets.length; j++) if (sameColor(s2.targets[i].tin, s2.targets[j].tin)) return null;
+        const cnt = { M: 0, D: 0, S: 0, P: 0 }; b.forEach(c => { if (c && cnt[c.t] !== undefined) cnt[c.t]++; });
+        const objects = 1 + cells.length + cnt.M + cnt.D + cnt.S + cnt.P, logic = cnt.D + cnt.S + cnt.P, viol = [];
+        if (objects < cfg.objLo) viol.push('board too empty'); if (objects > cfg.objHi) viol.push('board too full');
+        if (logic < cfg.minLogic) viol.push('too few pieces'); if (cfg.maxLogic && logic > cfg.maxLogic) viol.push('too many pieces'); if (cnt.M < 3) viol.push('too few mirrors'); if (cnt.M > 8) viol.push('too many mirrors');
+        if (cnt.P < 2) viol.push('needs two prisms'); if (cnt.D < 2) viol.push('needs two dimmers'); if (cnt.S < 1) viol.push('needs a splitter');
+        let fork = false;
+        for (let i = 0; i < 36; i++) {
+          const c = b[i]; if (!c || c.t !== 'S') continue;
+          const a = linkTargets(i * 4 + ((c.r + 1) & 3)), o = linkTargets(i * 4 + ((c.r + 3) & 3)); let overlap = false;
+          for (const x of a) if (o.has(x)) overlap = true;
+          if (!overlap) fork = true;
+        }
+        if (cfg.needFork && !fork) viol.push('no splitter feeds separate goals');
+        const colors = s2.targets.map(t => ({ i: t.i, c: t.tin })), costs = colors.map(q => minPieces(q.c));
+        if (colors.some(q => Math.max(...q.c) < 0.125 || q.c.some(v => v > 0 && v < 0.0625))) viol.push('a goal is too dark to read');
+        if (cfg.goals[1] === 1 ? !colors.every(q => vivid(q.c)) : !colors.some(q => vivid(q.c))) viol.push('goal colors are too plain');
+        if (Math.min(...costs.map(c => c.n)) < cfg.minCost) viol.push('a goal is too cheap');
+        if (logic - Math.max(...costs.map(c => c.n)) > cfg.slack) viol.push('wasteful: cheaper circuit exists');
+        return { board: b, cells, colors, viol, cnt, objects };
+      }
+
+      /* a splitter with one dead output is only a mirror: say so honestly, so splitters are left to do binary expansion */
+      function repairSplitters(board) {
+        const b = cloneBoard(board);
+        for (let it = 0; it < 4; it++) {
+          const s = simulate(b); if (s.feedback) return null;
+          let changed = false;
+          for (let i = 0; i < 36; i++) {
+            const c = b[i]; if (!c || c.t !== 'S') continue;
+            const l1 = linkRel(i * 4 + ((c.r + 1) & 3)), l2 = linkRel(i * 4 + ((c.r + 3) & 3));
+            if (l1 === l2) continue;
+            const out = l1 ? (c.r + 1) & 3 : (c.r + 3) & 3;
+            b[i] = { t: 'M', r: (3 - c.r) === out ? 0 : 1 }; changed = true;
+          }
+          if (!changed) break;
+          const pr = prune(b); if (!pr) return null; for (let i = 0; i < 36; i++) b[i] = pr[i];
+        }
+        return b;
+      }
+
+      function prune(board) {
+        const b = cloneBoard(board);
+        for (let it = 0; it < 4; it++) {
+          const s = simulate(b); if (s.feedback) return null;
+          let changed = false;
+          for (let i = 0; i < 36; i++) { const c = b[i]; if (c && 'MDSP'.includes(c.t) && !isRel(i)) { b[i] = null; changed = true; } }
+          if (!changed) break;
+        }
+        return simulate(b).feedback ? null : b;
+      }
+
+      function finalize(p, seed, mode, rng, cfg) {
+        const ref = [], base = new Array(36).fill(null), inv = { M: 0, D: 0, S: 0, P: 0 };
+        const mirrorCells = []; for (let i = 0; i < 36; i++) if (p.board[i] && p.board[i].t === 'M') mirrorCells.push(i);
+        let fixedSet = new Set();
+        if (mode === 'rails') fixedSet = new Set(mirrorCells);
+        else if (mode === 'mixed') { const k = Math.max(0, Math.min(Math.round(mirrorCells.length * 0.4), mirrorCells.length - 2)); fixedSet = new Set(rng.shuffle(mirrorCells.slice()).slice(0, k)); }
+        for (let i = 0; i < 36; i++) {
+          const c = p.board[i]; if (!c || c.t === 'T') continue;
+          if (c.t === 'E' || c.t === 'W') base[i] = { ...c, fixed: true };
+          else if (c.t === 'M' && fixedSet.has(i)) base[i] = { ...c, r: c.r & 1, fixed: true };
+          else { ref.push({ i, t: c.t, r: c.t === 'M' ? (c.r & 1) : c.r }); inv[c.t]++; }
+        }
+        const targets = p.cells.map(ci => ({ x: ci % N, y: (ci / N) | 0, color: p.colors.find(q => q.i === ci).c.slice() }));
+        const puz = { name: 'Seed ' + seed, seed, mode, base, inv, targets, ref, warnings: p.viol, attempts: p.used };
+        puz.meta = describe(puz);
+        return puz;
+      }
+
+      /* ---------- solver ----------
+         Enumerates every layout of inventory pieces (all lit, all relevant) that solves the puzzle.
+         Canonical DFS: always decide the lowest-index lit-but-undecided empty cell: leave it empty, or place a piece.
+         Each layout is generated exactly once. Dimmers that merely slide along a straight run fold into one 'circuit'. */
+      function solve(puz, o = {}) {
+        const maxMs = o.maxMs || 3000, maxSol = o.maxSol || 500, maxNodes = o.maxNodes || 3e7;
+        const board = makeBoard(puz, []); const inv = { M: 0, D: 0, S: 0, P: 0, ...puz.inv };
+        const decided = new Uint8Array(36), placed = [];
+        const sols = [], circuits = new Map(); let nodes = 0, aborted = false; const t0 = Date.now();
+        function optimisticReach(ci) {
+          const seen = new Uint8Array(144), st = [], turn = inv.M + inv.S + inv.P > 0;
+          for (const l of litLinks(ci)) { const c0 = l.key >> 2; st.push([(c0 % N) + DX[l.d], ((c0 / N) | 0) + DY[l.d], l.d]); }
+          while (st.length) {
+            const [x, y, d] = st.pop();
+            if (x < 0 || x >= N || y < 0 || y >= N) continue;
+            const k = (y * N + x) * 4 + d; if (seen[k]) continue; seen[k] = 1;
+            const i = y * N + x, c = board[i], go = dd => st.push([x + DX[dd], y + DY[dd], dd]);
+            if (!c) { go(d); if (turn && !decided[i]) for (let dd = 0; dd < 4; dd++) if (dd !== d) go(dd); continue; }
+            switch (c.t) {
+              case 'T': return true;
+              case 'M': go((c.r & 1) ? (d ^ 1) : (3 - d)); break;
+              case 'D': go(d); break;
+              case 'S': if (d === c.r) { go((c.r + 1) & 3); go((c.r + 3) & 3); } break;
+              case 'P': if (d === c.r) { go((c.r + 3) & 3); go(c.r); go((c.r + 1) & 3); } else go((c.r + 2) & 3); break;
+            }
+          }
+          return false;
+        }
+        function signature() {
+          const parts = [];
+          for (const p of placed) {
+            if (p.t !== 'D') { parts.push(p.t + p.i + ':' + (p.t === 'M' ? p.r & 1 : p.r)); continue; }
+            const ls = litLinks(p.i), l = ls.find(k => k.rel) || ls[0], d = l ? l.d : 0;
+            let x = p.i % N, y = (p.i / N) | 0, end = 'X';
+            for (; ;) { x += DX[d]; y += DY[d]; if (x < 0 || x >= N || y < 0 || y >= N) break; const c = board[y * N + x]; if (c && c.t !== 'D') { end = y * N + x; break; } }
+            parts.push('D>' + end + ':' + d);
+          }
+          return parts.sort().join('|');
+        }
+        function rec() {
+          if (aborted) return;
+          nodes++;
+          if (nodes > maxNodes || sols.length >= maxSol || ((nodes & 255) === 0 && Date.now() - t0 > maxMs)) { aborted = true; return; }
+          const sim = simulate(board); if (sim.feedback) return;
+          const left = inv.M + inv.D + inv.S + inv.P, forced = [];
+          let ci = -1;
+          if (left > 0) for (let i = 0; i < 36; i++) {
+            if (board[i] || decided[i] || !isLit(i)) continue;
+            if (!optimisticReach(i)) { decided[i] = 1; forced.push(i); continue; }
+            ci = i; break;
+          }
+          if (ci < 0) {
+            if (targetsOk(puz, sim) && placed.every(p => isRel(p.i))) {
+              const sig = signature();
+              sols.push({ pieces: placed.map(p => ({ ...p })), n: placed.length, sig });
+              circuits.set(sig, Math.min(circuits.get(sig) || 99, placed.length));
+            }
+          } else {
+            decided[ci] = 1; rec(); decided[ci] = 0;
+            for (const t of ['P', 'S', 'D', 'M']) {
+              if (!inv[t]) continue;
+              for (const r of (t === 'D' ? [0] : t === 'M' ? [0, 1] : [0, 1, 2, 3])) {
+                board[ci] = { t, r }; inv[t]--; placed.push({ i: ci, t, r }); decided[ci] = 1;
+                rec();
+                decided[ci] = 0; placed.pop(); inv[t]++; board[ci] = null;
+                if (aborted) break;
+              }
+              if (aborted) break;
+            }
+          }
+          for (const i of forced) decided[i] = 0;
+        }
+        rec();
+        const minPieces = sols.length ? Math.min(...sols.map(s => s.n)) : null;
+        const best = sols.length ? sols.reduce((a, b) => b.n < a.n ? b : a) : null;
+        return { solutions: sols, circuits: circuits.size, minPieces, best, exhaustive: !aborted, nodes, ms: Date.now() - t0 };
+      }
+
+      /* ---------- the diagram from the GDD, laid out on 6x6 ---------- */
+      function diagramPuzzle() {
+        const mk = a => a.map(([t, x, y, r]) => ({ i: idx(x, y), t, r }));
+        const ref = mk([['P', 1, 4, 0], ['D', 1, 2, 0], ['M', 1, 1, 0], ['S', 2, 4, 0], ['M', 2, 3, 0], ['D', 3, 3, 0],
+        ['M', 2, 5, 1], ['D', 3, 5, 0], ['D', 4, 5, 0], ['M', 5, 5, 0], ['P', 5, 3, 1], ['P', 5, 1, 1]]);
+        const alt = mk([['P', 1, 4, 0], ['D', 1, 2, 0], ['M', 1, 1, 0], ['D', 2, 4, 0], ['S', 3, 4, 0], ['M', 3, 3, 0],
+        ['M', 3, 5, 1], ['D', 4, 5, 0], ['M', 5, 5, 0], ['P', 5, 3, 1], ['P', 5, 1, 1]]);
+        const base = new Array(36).fill(null);
+        base[idx(0, 4)] = { t: 'E', r: 0, fixed: true };
+        const d = { name: 'Your diagram', seed: 'diagram', mode: 'free', base, inv: { M: 4, D: 4, S: 1, P: 3 }, targets: [{ x: 5, y: 0, color: [0.5, 0.75, 0] }], ref, alt, warnings: [] };
+        d.meta = describe(d); return d;
+      }
+
+      if (typeof module !== 'undefined') module.exports = { buildAbs, ABS_DATA, linkVal, describe, targetsOk, minPieces, litLinks, isLit, N, DX, DY, RULES, makeRng, to255, colorStr, sameColor, simulate, beams, generate, makeBoard, isSolved, solve, diagramPuzzle, idx, cloneBoard };
+
+      return { linkVal, describe, targetsOk, litLinks, isLit, N, DX, DY, RULES, makeRng, to255, colorStr, sameColor, simulate, beams, generate, makeBoard, isSolved, solve, diagramPuzzle, idx, cloneBoard };
+    })();
+
+    /* =====================================================================
+       PRISM UI. Everything below the engine is presentation and progress.
+       The engine (E) is untouched apart from the additive Easy profile.
+       ===================================================================== */
+    (function () {
+      'use strict';
+
+      const GAME_KEY = 'prism';
+      const $ = s => document.querySelector(s);
+      const $$ = s => Array.from(document.querySelectorAll(s));
+      const N = E.N, DX = E.DX, DY = E.DY;
+      const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const NAMES = { D: 'Dimmer', S: 'Splitter', P: 'Prism', M: 'Mirror' };
+      const ROTATES = { M: false, D: false, S: true, P: true };
+      const DIFF = {
+        easy: { goals: 'easy', label: 'Easy' },
+        medium: { goals: 'one', label: 'Medium' },
+        hard: { goals: 'several', label: 'Hard' },
+      };
+
+      /* ---------- Local storage helpers ---------- */
+      function storageGet(k) { try { return localStorage.getItem(`${GAME_KEY}-${k}`); } catch (e) { return null; } }
+      function storageSet(k, v) { try { localStorage.setItem(`${GAME_KEY}-${k}`, v); } catch (e) { /* storage unavailable */ } }
+      function storageJSON(k, fallback) { try { const v = JSON.parse(storageGet(k)); return v == null ? fallback : v; } catch (e) { return fallback; } }
+
+      /* ---------- Dates (the daily follows the player's local calendar day) ---------- */
+      const pad2 = n => String(n).padStart(2, '0');
+      const dateKey = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      function addDays(key, n) { const [y, m, d] = key.split('-').map(Number); return dateKey(new Date(y, m - 1, d + n)); }
+      function msToMidnight() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n; }
+      function dayLabel(key) { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+      function fmtTime(ms) {
+        const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+        return h ? `${h}:${pad2(m)}:${pad2(r)}` : `${m}:${pad2(r)}`;
+      }
+      function fmtCountdown(ms) {
+        const s = Math.max(0, Math.ceil(ms / 1000));
+        return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(s % 60)}`;
+      }
+
+      /* ---------- Color helpers ---------- */
+      const rgbCss = c => `rgb(${c.map(E.to255).join(',')})`;
+      const rgbCss255 = c => `rgb(${c.join(',')})`;
+      const rgba255 = (c, a) => `rgba(${c.join(',')},${a})`;
+      function beamCss(v) { const m = Math.max(...v), k = (0.42 + 0.58 * m) * 255 / m; return `rgb(${v.map(x => Math.round(Math.min(255, x * k))).join(',')})`; }
+      function labelText(v) {
+        const [r, g, b] = v.map(E.to255);
+        if (r === g && g === b) return 'W ' + r;
+        return [r && 'R' + r, g && 'G' + g, b && 'B' + b].filter(Boolean).join(' ');
+      }
+
+      /* ---------- Icons (drawn for rotation 0) ---------- */
+      const FONT = 'Manrope,system-ui,sans-serif';
+      function icon(t, r, o = {}) {
+        let body = '', rot = 0;
+        if (t === 'M') {
+          rot = (r & 1) * 90;
+          body = `<line x1="22" y1="78" x2="78" y2="22" stroke="url(#gMirror)" stroke-width="10" stroke-linecap="round"/><line x1="27" y1="73" x2="73" y2="27" stroke="#fff" stroke-opacity=".55" stroke-width="2.4" stroke-linecap="round"/>`;
+        } else if (t === 'D') {
+          body = `<rect x="18" y="18" width="64" height="64" rx="12" fill="rgba(20,24,38,.92)" stroke="#8f99c4" stroke-width="2.5"/><text x="50" y="63" text-anchor="middle" font-size="38" font-weight="700" fill="#cfd6ff" font-family="${FONT}">½</text>`;
+        } else if (t === 'S') {
+          rot = r * 90;
+          body = `<circle cx="50" cy="50" r="25" fill="url(#gGlass)" stroke="#cfd6ff" stroke-opacity=".75" stroke-width="2.5"/>
+      <line x1="6" y1="50" x2="25" y2="50" stroke="#fff" stroke-width="4" stroke-linecap="round"/><polygon points="17,42 29,50 17,58" fill="#fff"/>
+      <line x1="50" y1="25" x2="50" y2="15" stroke="#fff" stroke-width="4" stroke-linecap="round"/><polygon points="42,17 50,5 58,17" fill="#fff"/>
+      <line x1="50" y1="75" x2="50" y2="85" stroke="#fff" stroke-width="4" stroke-linecap="round"/><polygon points="42,83 50,95 58,83" fill="#fff"/>
+      <line x1="82" y1="40" x2="82" y2="60" stroke="#6d7699" stroke-width="5" stroke-linecap="round"/>`;
+        } else if (t === 'P') {
+          rot = r * 90;
+          // No port knobs. The colored exits only appear on the inventory icon (o.exits); on the board they'd clutter the beams.
+          const exits = o.exits ? `
+      <line x1="78" y1="50" x2="94" y2="50" stroke="#3DDC97" stroke-width="4" stroke-linecap="round"/>
+      <line x1="50" y1="29" x2="50" y2="8" stroke="#FF5468" stroke-width="4" stroke-linecap="round"/>
+      <line x1="50" y1="71" x2="50" y2="92" stroke="#5B8CFF" stroke-width="4" stroke-linecap="round"/>` : '';
+          const role = o.role || 'in';
+          const arrow = role === 'out' ? '<polygon points="25,41 9,50 25,59" fill="#fff"/>'
+            : role === 'both' ? '<polygon points="9,50 17,42 17,58" fill="#fff"/><polygon points="25,50 17,42 17,58" fill="#fff"/>'
+              : '<polygon points="9,41 25,50 9,59" fill="#fff"/>';
+          body = `<polygon points="26,38 78,20 78,80 26,62" fill="url(#gGlass)" stroke="#cfd6ff" stroke-opacity=".85" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M52 29V71" stroke="#fff" stroke-opacity=".13" stroke-width="1.5"/>
+      <line x1="26" y1="50" x2="8" y2="50" stroke="#fff" stroke-width="2.5"/>${arrow}${exits}`;
+        } else if (t === 'E') {
+          rot = r * 90;
+          body = `<rect x="14" y="14" width="72" height="72" rx="14" fill="#1a1f2e" stroke="#e8ecff" stroke-width="2.5"/><circle cx="44" cy="50" r="17" fill="#fff" opacity=".35" filter="url(#fSoft)"/><circle cx="44" cy="50" r="11" fill="#fff"/><polygon points="66,39 86,50 66,61" fill="#fff"/>`;
+        } else if (t === 'T') {
+          // The tile itself is the target color. The socket in the middle shows what is arriving.
+          const c = o.color || '#333', inner = o.inner, ok = !!o.ok;
+          let socket;
+          if (ok) socket = `<circle cx="50" cy="50" r="22" fill="${c}" stroke="#fff" stroke-opacity=".95" stroke-width="3"/>`;
+          else if (inner) socket = `<circle cx="50" cy="50" r="23" fill="#090b11" stroke="${o.bad ? '#FF6B7A' : 'rgba(255,255,255,.6)'}" stroke-width="2.5"${o.bad ? ' stroke-dasharray="5 4"' : ''}/><circle cx="50" cy="50" r="16" fill="${inner}"/>`;
+          else socket = `<circle cx="50" cy="50" r="23" fill="#090b11" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-dasharray="5 4"/>`;
+          body = `<rect x="5" y="5" width="90" height="90" rx="18" fill="${c}"/><rect x="5" y="5" width="90" height="90" rx="18" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/>${socket}` +
+            (o.count > 1 ? `<g><rect x="63" y="9" width="28" height="18" rx="9" fill="#FF6B7A"/><text x="77" y="22" text-anchor="middle" font-size="12" font-weight="800" fill="#1a0a0d" font-family="${FONT}">×${o.count}</text></g>` : '');
+        } else if (t === 'W') {
+          body = `<rect x="8" y="8" width="84" height="84" rx="8" fill="url(#pHatch)" stroke="#39405c" stroke-width="2"/>`;
+        }
+        return `<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(${rot} 50 50)">${body}</g></svg>`;
+      }
+      /* an icon placed inside a larger svg scene (used by the rules) */
+      const iconAt = (t, r, o, x, y, size = 100) => icon(t, r, o).replace('<svg ', `<svg x="${x}" y="${y}" width="${size}" height="${size}" `);
+
+      /* ---------- State ---------- */
+      const S = {
+        puz: null, kind: 'daily', diff: 'medium', seed: '', dateKey: '',
+        player: [], sel: null, labels: storageGet('labels') !== '0',
+        phase: 'idle',              // idle (no board yet) | loading | playing | won
+        started: false, elapsed: 0, runStart: 0,
+        result: null, hints: 0, fx: { pop: -1, rot: -1, hint: -1, all: false }, loopShown: false,
+      };
+      let drag = null, justDragged = 0, loadTok = 0;
+
+      const boardNow = () => E.makeBoard(S.puz, S.player);
+      const remaining = t => (S.puz.inv[t] || 0) - S.player.filter(p => p.t === t).length;
+      const isDaily = () => S.kind === 'daily';
+
+      /* ---------- Toast ---------- */
+      let toastTimer = 0;
+      function toast(msg, ms = 1800) {
+        const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+      }
+
+      /* ---------- Timer (kept quietly for the win modal; there is no on-screen readout) ---------- */
+      const anyModalOpen = () => !!document.querySelector('.modal-overlay.open');
+      const elapsedMs = () => S.elapsed + (S.runStart ? performance.now() - S.runStart : 0);
+      function syncTimer() {
+        const run = S.phase === 'playing' && S.started && !document.hidden && !anyModalOpen();
+        if (run && !S.runStart) S.runStart = performance.now();
+        else if (!run && S.runStart) { S.elapsed += performance.now() - S.runStart; S.runStart = 0; }
+      }
+      setInterval(syncTimer, 250);
+      document.addEventListener('visibilitychange', () => { syncTimer(); if (document.hidden) saveDaily(); });
+      addEventListener('pagehide', saveDaily);
+
+      /* ---------- Daily log, in-progress state and statistics ---------- */
+      const readLog = () => storageJSON('log', {});
+      const writeLog = l => storageSet('log', JSON.stringify(l));
+      function logDaily(r, extra) {
+        const log = readLog(), cur = log[S.dateKey];
+        if (cur && (cur.r === 's' || cur.r === 'x')) return;          // a finished day is final
+        if (r === 'a' && cur) return;
+        log[S.dateKey] = Object.assign({ r }, extra || {});
+        writeLog(log);
+      }
+      const dailyStoreKey = d => 'daily-' + d;
+      function saveDaily() {
+        if (!S.puz || !isDaily() || S.phase === 'loading') return;
+        storageSet(dailyStoreKey(S.dateKey), JSON.stringify({
+          phase: S.phase, player: S.player, started: S.started, elapsed: Math.round(elapsedMs()), result: S.result, hints: S.hints,
+        }));
+      }
+      function dailyStatus() {
+        const key = dateKey(), st = storageJSON(dailyStoreKey(key), null);
+        if (!st) return { key, phase: 'new' };
+        const assisted = st.phase === 'revealed' || (st.phase === 'won' && st.result && st.result.hinted);   // 'revealed' = saved by an earlier version
+        return { key, phase: assisted ? 'assisted' : st.phase === 'won' ? 'won' : st.started ? 'progress' : 'new' };
+      }
+      function computeStats() {
+        const log = readLog(), today = dateKey(), keys = Object.keys(log).sort(), t = log[today];
+        const run = (pred, from) => { let n = 0, k = from; while (log[k] && pred(log[k])) { n++; k = addDays(k, -1); } return n; };
+        const best = pred => {
+          let b = 0, r = 0, prev = null;
+          for (const k of keys) {
+            if (pred(log[k])) { r = prev && addDays(prev, 1) === k ? r + 1 : 1; prev = k; } else { r = 0; prev = null; }
+            b = Math.max(b, r);
+          }
+          return b;
+        };
+        const any = () => true, won = e => e.r === 's';
+        const attempted = run(any, t ? today : addDays(today, -1));
+        const solved = t && t.r === 's' ? run(won, today) : t && t.r === 'x' ? 0 : run(won, addDays(today, -1));
+        // today's unfinished attempt does not count against the solve rate until the day ends
+        const counted = keys.filter(k => !(k === today && log[k].r === 'a'));
+        const wins = counted.filter(k => log[k].r === 's').length;
+        const strip = [];
+        for (let i = 13; i >= 0; i--) { const k = addDays(today, -i); strip.push({ k, e: log[k] || null }); }
+        return { attempted, attemptedBest: best(any), solved, solvedBest: best(won), pct: counted.length ? Math.round(wins / counted.length * 100) : 0, wins, total: counted.length, strip };
+      }
+
+      /* ---------- Building puzzles ----------
+         Mirrors are always fixed ('rails'). Easy uses the additive engine profile, and is also asked to avoid
+         puzzles that only work by reusing a piece (logical minimum above 5). Derived seeds keep it deterministic. */
+      const okFor = (p, diff) => !!p && !(p.warnings || []).length && (diff !== 'easy' || (!p.meta.atLeast && p.meta.minBound <= 5));
+      function buildPuzzle(seed, diff, useCache) {
+        const cacheKey = `puz1:${diff}:${seed}`;
+        if (useCache) {
+          const hit = storageJSON(cacheKey, null);
+          try { if (hit && okFor(hit, diff) && E.isSolved(hit, E.makeBoard(hit, hit.ref))) return hit; } catch (e) { /* regenerate */ }
+        }
+        let best = null;
+        for (let a = 0; a < 8; a++) {
+          const p = E.generate(a ? seed + '~' + a : seed, { mode: 'rails', goals: DIFF[diff].goals });
+          if (!p) continue;
+          p.seed = seed;
+          if (!best || (p.warnings || []).length < (best.warnings || []).length) best = p;
+          if (okFor(p, diff)) { best = p; break; }
+        }
+        if (best && useCache) storageSet(cacheKey, JSON.stringify(best));
+        return best;
+      }
+      function validPlayer(puz, player) {
+        if (!Array.isArray(player)) return false;
+        const base = E.makeBoard(puz, []), seen = new Set(), used = {};
+        for (const c of player) {
+          if (!c || !(c.i >= 0 && c.i < 36) || base[c.i] || seen.has(c.i) || !(c.t in puz.inv)) return false;
+          seen.add(c.i); used[c.t] = (used[c.t] || 0) + 1;
+          if (used[c.t] > puz.inv[c.t]) return false;
+        }
+        return true;
+      }
+
+      /* ---------- Beam geometry ----------
+         A "section" is a straight run of beam between two pieces (or a piece and the edge). One line per section and
+         one arrow (or two on long runs) per section. Beams that share a path simply overlap and blend on screen.
+         Their arrows keep their own beam's color, and are set slightly apart so each one stays readable. */
+      const NRM = [[0, 1], [-1, 0], [0, -1], [1, 0]];       // right-hand side of each travel direction (screen coords)
+      function beamGeom(bm, board) {
+        const map = new Map(bm.map(b => [b.key, b])), used = new Set(), secs = [];
+        const follow = b => {
+          const links = [b]; used.add(b.key); let cur = b;
+          while (!cur.exit && !cur.stop && !cur.hit) {
+            const nx = cur.x + DX[cur.d], ny = cur.y + DY[cur.d];
+            if (nx < 0 || ny < 0 || nx >= N || ny >= N || board[ny * N + nx]) break;
+            const nb = map.get((ny * N + nx) * 4 + cur.d); if (!nb) break;
+            links.push(nb); used.add(nb.key); cur = nb;
+          }
+          return links;
+        };
+        for (const b of bm) if (board[b.y * N + b.x]) secs.push(follow(b));
+        for (const b of bm) if (!used.has(b.key)) secs.push(follow(b));        // safety net
+        const link = new Map();
+        for (const sec of secs) {
+          const f = sec[0], l = sec[sec.length - 1], d = f.d;
+          const lastLen = l.exit ? 50 : l.stop ? 62 : 100, len = (sec.length - 1) * 100 + lastLen;
+          const nx = l.x + DX[d], ny = l.y + DY[d];
+          const partner = !l.exit && nx >= 0 && ny >= 0 && nx < N && ny < N && map.has((ny * N + nx) * 4 + ((d + 2) & 3));
+          const x0 = (f.x + .5) * 100, y0 = (f.y + .5) * 100;
+          sec.g = { x0, y0, x1: x0 + DX[d] * len, y1: y0 + DY[d] * len, len, d, v: f.v, partner, exit: !!l.exit, src: board[f.y * N + f.x] };
+          sec.forEach((b, i) => {
+            const s = i * 100, e = i === sec.length - 1 ? len : s + 100;
+            link.set(b.key, { x0: x0 + DX[d] * s, y0: y0 + DY[d] * s, x1: x0 + DX[d] * e, y1: y0 + DY[d] * e });
+          });
+        }
+        return { secs, link };
+      }
+      function beamPaint(x0, y0, x1, y1, v) {
+        const m = Math.max(...v), col = beamCss(v);
+        return {
+          glow: `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${col}" stroke-opacity=".55" stroke-width="${10 + 8 * m}" stroke-linecap="round" style="mix-blend-mode:screen"/>`,
+          core: `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${col}" stroke-width="${3 + 3 * m}" stroke-linecap="round" style="mix-blend-mode:screen"/>`,
+        };
+      }
+      /* the arrow is its beam's color, lifted a little toward white so it stays visible on top of its own beam */
+      const arrowCss = v => beamCss(v).match(/\d+/g).map(Number).map(c => Math.round(c + (255 - c) * 0.35));
+      const arrowSvg = (x, y, d, v) => `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${d * 90})" d="M9,0 L-6,-7.2 L-2.4,0 L-6,7.2 Z" fill="rgb(${arrowCss(v).join(',')})" stroke="rgba(6,8,13,.85)" stroke-width="1.6" stroke-linejoin="round" paint-order="stroke"/>`;
+
+      function sectionArrows(sec) {
+        const g = sec.g, L = sec.length;
+        const a = 44, e = g.exit ? g.len : (L - 1) * 100 + 56;
+        if (g.exit && e - a < 10) return '';
+        const n = Math.max(1, Math.ceil(L / 3)); let out = '';
+        for (let i = 0; i < n; i++) {
+          let pos = a + (i + .5) / n * (e - a), px = 0, py = 0;
+          if (g.partner) { pos -= 5; px = NRM[g.d][0] * 6.5; py = NRM[g.d][1] * 6.5; }   // two beams share this path: sit side by side
+          out += arrowSvg(g.x0 + DX[g.d] * pos + px, g.y0 + DY[g.d] * pos + py, g.d, g.v);
+        }
+        return out;
+      }
+
+      /* value pills: try a few spots beside each beam and keep the one that covers the least */
+      function placeLabels(secs, board) {
+        const occ = [];
+        for (let i = 0; i < 36; i++) if (board[i]) occ.push({ x: (i % N) * 100 + 12, y: ((i / N) | 0) * 100 + 12, w: 76, h: 76 });
+        const lines = secs.map(sc => { const q = sc.g; return { x: Math.min(q.x0, q.x1) - 3, y: Math.min(q.y0, q.y1) - 3, w: Math.abs(q.x1 - q.x0) + 6, h: Math.abs(q.y1 - q.y0) + 6 }; });
+        const placed = [], area = (a, b) => { const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); return w > 0 && h > 0 ? w * h : 0; };
+        let out = '';
+        for (const sec of secs) {
+          const g = sec.g; if (!g.src || !'EDSP'.includes(g.src.t)) continue;
+          const txt = labelText(g.v), w = txt.length * 7.7 + 12, h = 19, L = sec.length;
+          const a = 44, e = g.exit ? g.len : (L - 1) * 100 + 56, side = [1, -1];
+          const nx = NRM[g.d][0], ny = NRM[g.d][1];
+          let best = null;
+          for (const f of [.5, .32, .68, .18, .82]) for (const s of side) for (const off of [15, 25, 37, 50, 63]) {
+            const pos = a + f * (e - a), cx = g.x0 + DX[g.d] * pos + nx * off * s, cy = g.y0 + DY[g.d] * pos + ny * off * s;
+            const rect = { x: cx - w / 2, y: cy - h / 2, w, h };
+            let score = Math.abs(f - .5) * 30 + off * .25;
+            if (rect.x < 3 || rect.y < 3 || rect.x + w > 597 || rect.y + h > 597) score += 5000;
+            for (const o of occ) score += area(rect, o);
+            for (const p of placed) score += 12 * area(rect, p);
+            for (const q of lines) score += 3 * area(rect, q);
+            if (!best || score < best.score) best = { score, rect, cx, cy };
+          }
+          placed.push(best.rect);
+          const m = Math.max(...g.v), lc = `rgb(${g.v.map(x => Math.round(255 * (0.6 + 0.4 * x / m))).join(',')})`;
+          out += `<rect x="${best.rect.x.toFixed(1)}" y="${best.rect.y.toFixed(1)}" width="${w.toFixed(1)}" height="${h}" rx="9" fill="rgba(8,10,16,.88)" stroke="rgba(255,255,255,.08)"/>` +
+            `<text x="${best.cx.toFixed(1)}" y="${(best.cy + 4.8).toFixed(1)}" text-anchor="middle" font-size="13.5" font-weight="800" fill="${lc}" font-family="${FONT}">${txt}</text>`;
+        }
+        return out;
+      }
+
+      /* ---------- Rendering ---------- */
+      function targetStates(sim) {
+        return S.puz.targets.map((t, k) => {
+          const ts = sim.targets.find(q => q.i === E.idx(t.x, t.y));
+          const tooMany = E.RULES.targetSingle && ts.hits > 1;
+          return { t, k, tin: ts.tin, hits: ts.hits, tooMany, any: ts.tin.some(x => x > 0), ok: !sim.feedback && !tooMany && E.sameColor(ts.tin, t.color) };
+        });
+      }
+      function buildCells() {
+        let h = '';
+        for (let i = 0; i < 36; i++) h += `<div class="cell" data-i="${i}" tabindex="${i === 0 ? 0 : -1}" role="button" aria-label="Row ${((i / 6) | 0) + 1}, column ${i % 6 + 1}"></div>`;
+        $('#cells').innerHTML = h;
+      }
+      function setNote(kind, text) {
+        const n = $('#stageNote');
+        n.classList.toggle('show', !!kind); n.classList.toggle('bad', kind === 'bad');
+        n.innerHTML = kind === 'bad'
+          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>${text}`
+          : kind ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>${text}` : '';
+      }
+
+      function render() {
+        const stage = $('#stage');
+        stage.classList.toggle('loading', S.phase === 'loading');
+        if (!S.puz) { $('#beams').innerHTML = $('#labels').innerHTML = $('#pieces').innerHTML = ''; setNote(null); renderTargets(null); renderTray(); updateButtons(); return; }
+
+        const puz = S.puz, board = boardNow(), sim = E.simulate(board), bm = E.beams(), multi = puz.targets.length > 1;
+        const tstate = targetStates(sim), geom = beamGeom(bm, board);
+
+        // beams: one line per straight section, with direction arrows
+        let glow = '', core = '', arrows = '';
+        for (const sec of geom.secs) {
+          const g = sec.g, p = beamPaint(g.x0, g.y0, g.x1, g.y1, g.v);
+          glow += p.glow; core += p.core; arrows += sectionArrows(sec);
+        }
+        $('#beams').innerHTML = `<g filter="url(#fGlow)">${glow}</g>${core}${arrows}`;
+        $('#labels').innerHTML = S.labels ? placeLabels(geom.secs, board) : '';
+
+        // pieces (the prism arrow reads the simulation, so no simulate() may run before this loop ends)
+        let ph = '';
+        const editable = S.phase === 'playing';
+        for (let i = 0; i < 36; i++) {
+          const c = board[i]; if (!c) continue;
+          const x = i % 6, y = (i / 6) | 0, mv = !c.fixed && editable;
+          let ic;
+          if (c.t === 'T') {
+            const ts = tstate[c.k];
+            ic = icon('T', 0, { color: rgbCss(ts.t.color), inner: ts.any ? rgbCss(ts.tin) : null, ok: ts.ok, bad: ts.tooMany, count: ts.tooMany ? ts.hits : 0 });
+          } else {
+            const o = {};
+            if (c.t === 'P') { const inb = E.litLinks(i).some(l => l.d === c.r), outb = E.linkVal(i * 4 + ((c.r + 2) & 3)); o.role = inb && outb && outb.some(v => v > 0) ? 'both' : outb && outb.some(v => v > 0) ? 'out' : 'in'; }
+            ic = icon(c.t, c.r, o);
+          }
+          const lit = c.t === 'T' && S.phase === 'won', glowVar = lit ? `;--glow:${rgbCss255(glowOf(tstate[c.k].t.color.map(E.to255)))}` : '';
+          const cls = 'pc' + (mv ? ' mv' : '') + (S.fx.pop === i || S.fx.all && !c.fixed ? ' pop' : '') + (S.fx.rot === i ? ' rot' : '') + (lit ? ' lit' : '') + (S.fx.hint === i ? ' hint' : '');
+          ph += `<div class="${cls}" data-i="${i}" style="left:${x * 100 / 6}%;top:${y * 100 / 6}%${glowVar}">${ic}</div>`;
+        }
+        $('#pieces').innerHTML = ph;
+        S.fx = { pop: -1, rot: -1, hint: -1, all: false };
+
+        $$('.cell').forEach(el => {
+          const i = +el.dataset.i, c = board[i];
+          el.classList.toggle('pick', editable && !!S.sel && !c);
+          const nm = !c ? 'empty' : c.t === 'T' ? 'target' : c.t === 'E' ? 'emitter' : c.t === 'W' ? 'wall' : NAMES[c.t].toLowerCase();
+          el.setAttribute('aria-label', `Row ${((i / 6) | 0) + 1}, column ${i % 6 + 1}, ${nm}`);
+        });
+
+        // state note and feedback loops
+        if (sim.feedback) {
+          setNote('bad', 'Feedback loop');
+          if (!S.loopShown) { S.loopShown = true; toast('A beam is feeding back into itself. Break the loop.', 2600); }
+        } else {
+          S.loopShown = false;
+          setNote(null);
+        }
+        stage.classList.toggle('loop', sim.feedback && S.phase === 'playing');
+
+        renderTargets(tstate); renderTray(); updateButtons();
+      }
+
+      /* ---------- Target row ---------- */
+      const inkOn = c => (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 > 0.6 ? '#0b0d14' : '#ffffff';
+      function renderTargets(tstate) {
+        const box = $('#targets');
+        if (!tstate) { box.innerHTML = ''; box.className = 'targets'; return; }
+        box.className = 'targets n' + tstate.length;
+        const label = tstate.length === 1 ? 'Target' : 'Targets';
+        box.innerHTML = `<span class="tlabel" id="tlabel">${label}</span>` + tstate.map(ts => {
+          const c = ts.t.color.map(E.to255);
+          return `<div class="tchip${ts.ok ? ' ok' : ''}" style="background:${rgbCss255(c)};color:${inkOn(c)}" title="Target ${c.join(', ')}">` +
+            (ts.ok ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') +
+            `<span>${labelText(ts.t.color)}</span></div>`;
+        }).join('');
+        fitTargets();
+      }
+      function fitTargets() {                            // keep every chip on one row: drop the label, then shrink the type
+        const box = $('#targets'); if (!box.firstChild) return;
+        const chips = [...box.querySelectorAll('.tchip')], over = () => chips.some(c => c.scrollWidth > c.clientWidth + 1);
+        box.style.removeProperty('--tfs'); const lab = $('#tlabel'); if (lab) lab.style.display = '';
+        if (over() && lab) lab.style.display = 'none';
+        for (let fs = 13.5; over() && fs > 8; fs -= 0.5) box.style.setProperty('--tfs', fs + 'px');
+      }
+
+      function renderTray() {
+        const tray = $('#tray'); let th = '', n = 0;
+        if (S.puz) {
+          const canDrag = S.phase === 'playing';
+          for (const t of ['D', 'S', 'P', 'M']) {
+            if (!(S.puz.inv[t] > 0)) continue; n++;
+            const left = remaining(t), none = left <= 0;
+            th += `<button class="ti${S.sel === t ? ' sel' : ''}${none ? ' none' : ''}" data-t="${t}" type="button" aria-label="${NAMES[t]}, ${left} left"${canDrag && !none ? '' : ' aria-disabled="true"'}>` +
+              `<span class="ic">${icon(t, 0, { exits: true })}</span><span class="nm">${NAMES[t]}</span>` +
+              `<span class="ct">${none ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : left}</span></button>`;
+          }
+          tray.classList.toggle('locked', !canDrag);
+        }
+        tray.style.setProperty('--n', Math.max(1, n));
+        tray.innerHTML = th;
+      }
+
+      function updateButtons() {
+        const has = !!S.puz, playing = S.phase === 'playing';
+        const locked = isDaily() && S.phase !== 'playing';
+        $('#resetBtn').disabled = !has || S.phase === 'loading' || locked || (playing && !S.player.length);
+        $('#solutionBtn').disabled = !has || !playing;
+        $('#rgbBtn').setAttribute('aria-pressed', S.labels ? 'true' : 'false');
+      }
+
+      /* ---------- Placing, rotating, removing ---------- */
+      const canEdit = () => S.phase === 'playing';
+      function afterChange() { saveDaily(); checkWin(); }
+      function place(i, t, r) {
+        if (!canEdit() || boardNow()[i] || remaining(t) <= 0) return;
+        if (r == null) {
+          r = 0;
+          if (t === 'S' || t === 'P') { E.simulate(boardNow()); const ls = E.litLinks(i); if (ls.length === 1) r = ls[0].d; }   // face the only beam
+        }
+        if (!S.started) { S.started = true; if (isDaily()) logDaily('a'); syncTimer(); }
+        S.player.push({ i, t, r });
+        if (remaining(t) <= 0 && S.sel === t) S.sel = null;
+        S.fx.pop = i; render(); afterChange();
+      }
+      function rotate(i) {
+        const p = S.player.find(q => q.i === i); if (!canEdit() || !p || !ROTATES[p.t]) return;
+        p.r = (p.r + 1) & 3; S.fx.rot = i; render(); afterChange();
+      }
+      function removeAt(i) { if (!canEdit()) return; S.player = S.player.filter(q => q.i !== i); render(); saveDaily(); }
+
+      function cellAt(cx, cy) {
+        const r = $('#stage').getBoundingClientRect();
+        const x = Math.floor((cx - r.left) / r.width * 6), y = Math.floor((cy - r.top) / r.height * 6);
+        return x < 0 || x > 5 || y < 0 || y > 5 ? -1 : y * 6 + x;
+      }
+
+      /* ---------- Dragging (mouse, touch and pen through pointer events) ---------- */
+      function startDrag(e, info) {
+        if (!canEdit() || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        e.preventDefault();
+        drag = { ...info, sx: e.clientX, sy: e.clientY, moved: false, ghost: null, touch: e.pointerType !== 'mouse', size: $('#stage').getBoundingClientRect().width / 6 };
+        addEventListener('pointermove', onMove); addEventListener('pointerup', onUp); addEventListener('pointercancel', onUp);
+      }
+      const dropPoint = (e, d) => ({ x: e.clientX, y: e.clientY - (d.touch ? d.size * 0.85 : 0) });   // lift the ghost above a finger
+      function onMove(e) {
+        if (!drag) return;
+        if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) {
+          drag.moved = true;
+          if (drag.kind === 'board') { S.player = S.player.filter(q => q.i !== drag.i); render(); }
+          const g = document.createElement('div');
+          g.className = 'ghost'; g.style.width = g.style.height = drag.size + 'px'; g.innerHTML = icon(drag.t, drag.r || 0);
+          document.body.appendChild(g); drag.ghost = g;
+        }
+        if (drag.moved) {
+          const p = dropPoint(e, drag);
+          drag.ghost.style.left = p.x + 'px'; drag.ghost.style.top = p.y + 'px';
+          const i = cellAt(p.x, p.y), free = i >= 0 && !boardNow()[i];
+          $$('.cell').forEach(el => el.classList.toggle('hover', free && +el.dataset.i === i));
+          const tr = $('#tray').getBoundingClientRect();
+          $('#tray').classList.toggle('drop', drag.kind === 'board' && e.clientY > tr.top - 10 && e.clientY < tr.bottom + 10 && e.clientX > tr.left && e.clientX < tr.right);
+        }
+      }
+      function onUp(e) {
+        removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp);
+        const d = drag; drag = null; if (!d) return;
+        $$('.cell').forEach(el => el.classList.remove('hover')); $('#tray').classList.remove('drop');
+        if (d.ghost) d.ghost.remove();
+        if (!d.moved) {
+          if (d.kind === 'tray') { S.sel = S.sel === d.t ? null : (remaining(d.t) > 0 ? d.t : null); render(); }
+          else rotate(d.i);
+          return;
+        }
+        justDragged = Date.now();
+        const p = dropPoint(e, d), i = e.type === 'pointercancel' ? -1 : cellAt(p.x, p.y), b = boardNow();
+        if (i >= 0 && !b[i]) place(i, d.t, d.kind === 'board' ? d.r : null);
+        else if (d.kind === 'board' && i >= 0) { S.player.push({ i: d.i, t: d.t, r: d.r }); render(); }   // dropped on something: snap back
+        else { render(); saveDaily(); }                                                                     // dropped elsewhere: back to the tray
+      }
+      $('#pieces').addEventListener('pointerdown', e => {
+        const el = e.target.closest('.pc.mv'); if (!el) return;
+        const i = +el.dataset.i, p = S.player.find(q => q.i === i); if (!p) return;
+        startDrag(e, { kind: 'board', i, t: p.t, r: p.r });
+      });
+      $('#tray').addEventListener('pointerdown', e => {
+        const el = e.target.closest('.ti'); if (!el) return;
+        const t = el.dataset.t; if (remaining(t) <= 0) return;
+        startDrag(e, { kind: 'tray', t, r: 0 });
+      });
+      $('#tray').addEventListener('keydown', e => {
+        const el = e.target.closest('.ti'); if (!el || (e.key !== 'Enter' && e.key !== ' ') || !canEdit()) return;
+        e.preventDefault(); const t = el.dataset.t; S.sel = S.sel === t ? null : (remaining(t) > 0 ? t : null); render();
+        const again = $(`.ti[data-t="${t}"]`); if (again) again.focus();
+      });
+      $('#cells').addEventListener('click', e => {
+        if (Date.now() - justDragged < 120) return;
+        const c = e.target.closest('.cell'); if (!c || !S.sel) return;
+        place(+c.dataset.i, S.sel);
+      });
+      /* keyboard: arrows move around the board, Enter places or rotates, Delete returns a piece */
+      $('#cells').addEventListener('keydown', e => {
+        const c = e.target.closest('.cell'); if (!c) return;
+        const i = +c.dataset.i, x = i % 6, y = (i / 6) | 0, mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+        if (mv) {
+          e.preventDefault(); const nx = x + mv[0], ny = y + mv[1]; if (nx < 0 || ny < 0 || nx > 5 || ny > 5) return;
+          $$('.cell').forEach(el => el.tabIndex = -1); const n = $(`.cell[data-i="${ny * 6 + nx}"]`); n.tabIndex = 0; n.focus(); return;
+        }
+        if (!canEdit()) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (S.sel && !boardNow()[i]) { place(i, S.sel); const n = $(`.cell[data-i="${i}"]`); if (n) n.focus(); }
+          else if (S.player.some(q => q.i === i)) { rotate(i); const n = $(`.cell[data-i="${i}"]`); if (n) n.focus(); }
+        } else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); removeAt(i); const n = $(`.cell[data-i="${i}"]`); if (n) n.focus(); }
+      });
+      $('#cells').addEventListener('focusin', e => {
+        const c = e.target.closest('.cell'); if (!c) return;
+        $$('.cell').forEach(el => el.tabIndex = el === c ? 0 : -1);
+      });
+
+      /* ---------- Win check, reveal, reset ---------- */
+      function checkWin() {
+        if (S.phase !== 'playing' || (drag && drag.moved)) return;
+        const board = boardNow();
+        if (!E.targetsOk(S.puz, E.simulate(board))) return;
+        onSolved(board);
+      }
+      function onSolved(board) {
+        S.phase = 'won'; S.sel = null; syncTimer();
+        const colors = S.puz.targets.map(t => t.color.map(E.to255));
+        S.result = { time: Math.round(S.elapsed), pieces: S.player.length, ref: S.puz.ref.length, colors, kind: S.kind, diff: S.diff, key: S.dateKey, hints: S.hints, hinted: isDaily() && S.hints > 0 };
+        if (isDaily() && !S.result.hinted) logDaily('s', { t: S.result.time, p: S.result.pieces, n: S.result.ref, c: colors[0] });   // a hinted daily was already logged as not solved
+        saveDaily(); renderTray(); updateButtons(); updateMenu();
+        playWin(board, () => { if (S.result.hinted) toast("Solved with hints. Today's daily won't count.", 3600); else openWin(S.result); });
+      }
+      /* ---------- Hints ----------
+         The reference solution is the answer key. A placed piece is right if it matches a reference piece exactly.
+         A dimmer also counts if it sits anywhere along the same straight run of beam: sliding it along a run that
+         carries only that one beam changes nothing, so a valid move is not punished. Everything else is wrong. */
+      function hintPlan() {
+        const puz = S.puz, refBoard = E.makeBoard(puz, puz.ref);
+        E.simulate(refBoard);                                   // read everything we need before simulating again
+        const bm = E.beams(), order = new Map(bm.map((b, i) => [b.key, i]));
+        const rankOf = new Map(), zone = new Map();
+        for (const c of puz.ref) {
+          let m = 1e9; for (const l of E.litLinks(c.i)) if (order.has(l.key)) m = Math.min(m, order.get(l.key));
+          rankOf.set(c, m);                                     // how far along the beam this piece sits (emitter = 0)
+          if (c.t !== 'D') continue;
+          const ls = E.litLinks(c.i), cells = new Set([c.i]);
+          if (ls.length === 1) for (const dir of [ls[0].d, (ls[0].d + 2) & 3]) {
+            let x = (c.i % N) + DX[dir], y = ((c.i / N) | 0) + DY[dir];
+            while (x >= 0 && y >= 0 && x < N && y < N) {
+              const j = y * N + x, there = refBoard[j];
+              if (there && there.t !== 'D') break;              // another piece ends the run
+              if (E.litLinks(j).length === 1) cells.add(j);     // skip cells where a second beam crosses
+              x += DX[dir]; y += DY[dir];
+            }
+          }
+          zone.set(c, cells);
+        }
+        const norm = c => c.t === 'D' ? 0 : c.t === 'M' ? c.r & 1 : c.r;
+        const slots = puz.ref.map(c => ({ c, used: false })), placed = S.player.map(p => ({ p, ok: false }));
+        for (const e of placed) {                               // exact matches first
+          const m = slots.find(f => !f.used && f.c.i === e.p.i && f.c.t === e.p.t && norm(f.c) === norm(e.p));
+          if (m) m.used = e.ok = true;
+        }
+        for (const e of placed) if (!e.ok && e.p.t === 'D') {   // then dimmers that slid along their run
+          const m = slots.find(f => !f.used && f.c.t === 'D' && zone.get(f.c).has(e.p.i));
+          if (m) m.used = e.ok = true;
+        }
+        return {
+          wrong: placed.filter(e => !e.ok).map(e => e.p),
+          missing: slots.filter(f => !f.used).map(f => f.c).sort((a, b) => rankOf.get(a) - rankOf.get(b) || a.i - b.i),
+        };
+      }
+      function hint() {
+        if (S.phase !== 'playing') return;
+        const { wrong, missing } = hintPlan();
+        if (!missing.length) { toast('Nothing left to fix.'); return; }
+        const next = missing[0];
+        if (!S.started) { S.started = true; if (isDaily()) logDaily('a'); syncTimer(); }
+        if (isDaily() && S.hints === 0) logDaily('x', { t: Math.round(elapsedMs()) });      // the daily is now a non-solve
+        S.hints++;
+        S.player = S.player.filter(p => !wrong.includes(p));
+        S.player.push({ i: next.i, t: next.t, r: next.r });
+        S.sel = null; S.fx.pop = S.fx.hint = next.i;
+        const w = wrong.length;
+        toast((w ? `Removed ${w} misplaced ${w === 1 ? 'piece' : 'pieces'} and placed` : 'Placed') + ` a ${NAMES[next.t].toLowerCase()}.`);
+        render(); afterChange();
+      }
+      function resetBoard() {
+        if (!S.puz || S.phase === 'loading') return;
+        if (isDaily() && S.phase !== 'playing') return;
+        if (S.phase !== 'playing') { cancelWin(); clearWash(); S.phase = 'playing'; S.started = false; S.elapsed = 0; S.runStart = 0; S.result = null; S.hints = 0; }
+        S.player = []; S.sel = null; render(); saveDaily();
+      }
+      $('#solutionBtn').addEventListener('click', () => {
+        if (S.phase !== 'playing') return;
+        if (isDaily() && S.hints === 0) openModal($('#confirmOverlay')); else hint();
+      });
+      $('#confirmYes').addEventListener('click', () => { closeModal($('#confirmOverlay')); hint(); });
+      $('#confirmNo').addEventListener('click', () => closeModal($('#confirmOverlay')));
+      $('#confirmCloseBtn').addEventListener('click', () => closeModal($('#confirmOverlay')));
+      $('#rgbBtn').addEventListener('click', () => { S.labels = !S.labels; storageSet('labels', S.labels ? '1' : '0'); render(); });
+
+      /* hold to reset: the button fills, and releasing early only shows a hint */
+      (function holdReset() {
+        const btn = $('#resetBtn'), HOLD = 700; let timer = 0, active = false;
+        btn.style.setProperty('--hold-ms', HOLD + 'ms');
+        const start = () => { if (btn.disabled || active) return; active = true; btn.classList.add('holding'); timer = setTimeout(done, HOLD); };
+        const cancel = hint => { if (!active) return; active = false; clearTimeout(timer); btn.classList.remove('holding'); if (hint) toast('Hold to reset the board'); };
+        const done = () => { active = false; btn.classList.remove('holding'); resetBoard(); };
+        btn.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button !== 0) return; start(); });
+        ['pointerup'].forEach(ev => btn.addEventListener(ev, () => cancel(true)));
+        ['pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => cancel(false)));
+        btn.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); start(); } });
+        btn.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') cancel(true); });
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+        btn.addEventListener('click', e => e.preventDefault());
+      })();
+
+      /* ---------- Loading puzzles ---------- */
+      function loadPuzzle(kind, diff, opts = {}) {
+        const tok = ++loadTok;
+        cancelWin(); clearWash(); saveDaily();
+        S.phase = 'loading'; S.puz = null; S.sel = null; render();
+        requestAnimationFrame(() => setTimeout(() => {
+          if (tok !== loadTok) return;
+          const dk = dateKey(), seed = kind === 'daily' ? dk : 'r' + Math.random().toString(36).slice(2, 8);
+          const puz = buildPuzzle(seed, diff, kind === 'daily');
+          if (tok !== loadTok) return;
+          if (!puz) { S.phase = 'idle'; toast('Could not build that puzzle. Try again.'); updateMenu(); openModal($('#menuOverlay')); return; }
+          Object.assign(S, { puz, kind, diff, seed, dateKey: dk, player: [], sel: null, started: false, elapsed: 0, runStart: 0, result: null, hints: 0, phase: 'playing', loopShown: false });
+          if (kind === 'daily') restoreDaily();
+          render(); updateMenu();
+          if (S.phase === 'won') applyWinGlow();
+          if (opts.showResults && S.phase === 'won' && S.result && !S.result.hinted) openWin(S.result);
+        }, 20));
+      }
+      function restoreDaily() {
+        const st = storageJSON(dailyStoreKey(S.dateKey), null);
+        if (!st || !validPlayer(S.puz, st.player)) return;
+        S.player = st.player; S.started = !!st.started; S.elapsed = st.elapsed || 0; S.hints = st.hints || 0;
+        if (st.phase === 'won' && st.result) { S.phase = 'won'; S.result = st.result; }
+        else if (st.phase === 'revealed') {          // saved by the earlier full-solution button: treat as finished with help
+          S.phase = 'won'; S.hints = Math.max(1, S.hints);
+          S.result = st.result || { time: Math.round(S.elapsed), pieces: S.player.length, ref: S.puz.ref.length, colors: S.puz.targets.map(t => t.color.map(E.to255)), kind: 'daily', diff: 'medium', key: S.dateKey, hints: S.hints, hinted: true };
+        }
+      }
+
+      /* =====================================================================
+         WIN SEQUENCE
+         1. The finished circuit is read back from the simulation (only the beams that actually reach a goal).
+         2. Pulses leave the emitter and follow those beams. A piece that merges several beams (a prism) holds the
+            early pulses until the last one arrives, then sends one on. That is the "meeting up".
+         3. Each goal ignites when its pulse lands. When the last one has, light floods out from every goal across
+            the board and then the page, and settles into a soft glow.
+         Clicking anywhere skips to the end.
+         ===================================================================== */
+      let fxRun = null;
+
+      function successors(b, board) {                    // which links a beam feeds; mirrors the engine's routing rules
+        const nx = b.x + DX[b.d], ny = b.y + DY[b.d]; if (nx < 0 || ny < 0 || nx >= N || ny >= N) return [];
+        const ni = ny * N + nx, c = board[ni], d = b.d; let outs = [];
+        if (!c) outs = [d];
+        else switch (c.t) {
+          case 'M': outs = [(c.r & 1) ? (d ^ 1) : (3 - d)]; break;
+          case 'D': outs = [d]; break;
+          case 'S': if (d === c.r) outs = [(c.r + 1) & 3, (c.r + 3) & 3]; break;
+          case 'P': outs = d === c.r ? [(c.r + 3) & 3, c.r, (c.r + 1) & 3] : [(c.r + 2) & 3]; break;
+        }
+        return outs.map(o => ni * 4 + o);
+      }
+      /* dark goals would give a dim celebration, so the glow keeps the hue but is lifted toward full brightness */
+      function glowOf(c) { const m = Math.max(...c, 1), k = 1 + 0.65 * (255 / m - 1); return c.map(v => Math.min(255, Math.round(v * k))); }
+      function winTargets() {
+        return S.puz.targets.map(t => { const c = t.color.map(E.to255); return { x: t.x, y: t.y, cell: E.idx(t.x, t.y), c: glowOf(c) }; });
+      }
+      function setWinColor(c) { $('#stage').style.setProperty('--win', rgbCss255(c)); }
+      const FINAL_ALPHA = n => (n > 1 ? 0.15 : 0.21);
+
+      function mountWash(t, animate, delay = 0, total = 1) {
+        const stage = $('#stage'), sr = stage.getBoundingClientRect();
+        const cx = sr.left + (t.x + .5) / 6 * sr.width, cy = sr.top + (t.y + .5) / 6 * sr.height;
+        const far = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy)) + 60;
+        const finalA = FINAL_ALPHA(total);
+        const pw = document.createElement('div'); pw.className = 'pwash'; pw.dataset.tx = t.x; pw.dataset.ty = t.y;
+        pw.style.background = `radial-gradient(circle at ${cx}px ${cy}px, rgba(255,255,255,.7) 0, ${rgba255(t.c, 1)} 12%, ${rgba255(t.c, .6)} 55%, ${rgba255(t.c, .4)} 100%)`;
+        pw.style.clipPath = `circle(${animate ? 0 : far}px at ${cx}px ${cy}px)`;
+        pw.style.opacity = animate ? 1 : finalA;
+        document.body.appendChild(pw);
+        if (!animate) return;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          pw.style.transition = `clip-path 1250ms cubic-bezier(.16,.8,.24,1) ${delay + 120}ms, opacity 1100ms ease ${delay + 1000}ms`;
+          pw.style.clipPath = `circle(${far}px at ${cx}px ${cy}px)`; pw.style.opacity = finalA;
+        }));
+        // the same burst, inside the board, brighter and quicker
+        const px = (t.x + .5) / 6 * 100, py = (t.y + .5) / 6 * 100;
+        const bw = document.createElement('div'); bw.className = 'bwash';
+        bw.style.background = `radial-gradient(circle at ${px}% ${py}%, #fff 0, ${rgba255(t.c, 1)} 14%, ${rgba255(t.c, .92)} 100%)`;
+        bw.style.clipPath = `circle(0% at ${px}% ${py}%)`;
+        stage.appendChild(bw);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          bw.style.transition = `clip-path 900ms cubic-bezier(.2,.8,.25,1) ${delay}ms, opacity 800ms ease ${delay + 800}ms`;
+          bw.style.clipPath = `circle(150% at ${px}% ${py}%)`; bw.style.opacity = 0;
+        }));
+        setTimeout(() => bw.remove(), delay + 1900);
+      }
+      function applyWinGlow() {          // solved state without the show (restored daily, resize)
+        clearWash(true);
+        const ts = winTargets(); $('#stage').classList.add('solved'); setWinColor(ts[0].c);
+        ts.forEach(t => mountWash(t, false, 0, ts.length));
+      }
+      function clearWash(quick) {
+        const stage = $('#stage'); stage.classList.remove('solved', 'winning');
+        $$('.pwash').forEach(el => { if (quick) el.remove(); else { el.style.transition = 'opacity 260ms ease'; el.style.opacity = 0; setTimeout(() => el.remove(), 300); } });
+        $$('.bwash').forEach(el => el.remove());
+        $('#fx').innerHTML = '';
+      }
+      function cancelWin() {
+        if (!fxRun) return;
+        cancelAnimationFrame(fxRun.raf); removeEventListener('pointerdown', fxRun.skip, true);
+        fxRun.timers.forEach(clearTimeout); fxRun = null;
+        $('#fx').innerHTML = ''; $('#stage').classList.remove('winning');
+        $$('.pc.ignite, .pc.zap').forEach(el => el.classList.remove('ignite', 'zap'));
+      }
+
+      function playWin(board, done) {
+        cancelWin();
+        const stage = $('#stage'), svg = $('#fx'), targets = winTargets();
+        const finishNow = () => {
+          if (!fxRun) return; const cb = fxRun.done; cancelWin();
+          applyWinGlow(); targets.forEach(t => { const el = $(`.pc[data-i="${t.cell}"]`); if (el) { el.style.setProperty('--glow', rgbCss255(t.c)); el.classList.add('ignite'); } });
+          cb();
+        };
+        const run = { raf: 0, timers: [], done, skip: null };
+        fxRun = run;
+
+        const sim = E.simulate(board), bm = E.beams(), geo = beamGeom(bm, board), map = new Map(bm.map(b => [b.key, b]));
+        const rel = new Set(); for (let i = 0; i < 36; i++) for (const l of E.litLinks(i)) if (l.rel) rel.add(l.key);
+        if (reducedMotion() || !rel.size || !rel.has(sim.startKey)) {
+          applyWinGlow(); run.timers.push(setTimeout(() => { if (fxRun === run) { fxRun = null; done(); } }, 450)); return;
+        }
+
+        // schedule: every link takes one step; a link leaves when all of its feeders have arrived
+        const succ = new Map(), pred = new Map();
+        for (const k of rel) {
+          const b = map.get(k); if (!b) continue;
+          const outs = successors(b, board).filter(s => rel.has(s)); succ.set(k, outs);
+          for (const s of outs) { if (!pred.has(s)) pred.set(s, []); pred.get(s).push(k); }
+        }
+        const t0 = new Map();
+        const T0 = k => { if (t0.has(k)) return t0.get(k); if (k === sim.startKey) { t0.set(k, 0); return 0; } let m = 0; for (const p of pred.get(k) || []) m = Math.max(m, T0(p) + 1); t0.set(k, m); return m; };
+        let steps = 1; for (const k of rel) steps = Math.max(steps, T0(k) + 1);
+        const TC = Math.min(0.22, Math.max(0.1, 2.0 / steps)) * 1000;          // ms per link
+
+        stage.classList.add('winning');
+        const zapped = new Set(), ignited = new Map(); let burstAt = -1, started = performance.now(), ended = false;
+        const zap = cell => { const el = $(`.pc[data-i="${cell}"]`); if (el) { el.classList.remove('zap'); void el.offsetWidth; el.classList.add('zap'); } };
+        const head = (x, y, col) => `<circle cx="${x}" cy="${y}" r="17" fill="${col}" opacity=".28"/><circle cx="${x}" cy="${y}" r="10" fill="${col}" opacity=".6"/><circle cx="${x}" cy="${y}" r="4.6" fill="#fff"/>`;
+
+        function frame(now) {
+          if (fxRun !== run) return;
+          const tm = now - started, t = tm / TC; let h = '', rings = '';
+          if (ended && tm - burstAt > 900) { svg.innerHTML = ''; run.raf = requestAnimationFrame(frame); return; }
+          for (const k of rel) {
+            const b = map.get(k), g = geo.link.get(k); if (!b || !g) continue;
+            const s0 = T0(k); if (t < s0) continue;
+            const p = Math.min(1, t - s0), col = beamCss(b.v);
+            const hx = g.x0 + (g.x1 - g.x0) * p, hy = g.y0 + (g.y1 - g.y0) * p;
+            h += `<line x1="${g.x0}" y1="${g.y0}" x2="${hx}" y2="${hy}" stroke="${col}" stroke-width="8" stroke-linecap="round" opacity=".9"/><line x1="${g.x0}" y1="${g.y0}" x2="${hx}" y2="${hy}" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>`;
+            const waiting = p >= 1 && (succ.get(k) || []).some(s => t < T0(s));
+            if (p < 1 || waiting) h += head(hx, hy, col);
+            if (p >= 1 && !zapped.has(k)) {
+              zapped.add(k);
+              const cell = (b.y + DY[b.d]) * N + b.x + DX[b.d];
+              if (b.hit) {
+                const tg = targets.find(q => q.cell === cell);
+                if (tg && !ignited.has(cell)) {
+                  ignited.set(cell, tm);
+                  const el = $(`.pc[data-i="${cell}"]`); if (el) { el.style.setProperty('--glow', rgbCss255(tg.c)); el.classList.add('ignite'); }
+                  if (ignited.size === targets.length && burstAt < 0) burstAt = tm + 60;
+                }
+              } else zap(cell);
+            }
+          }
+          for (const [cell, at] of ignited) {                       // shockwave rings from each goal
+            const age = (tm - at) / 750; if (age > 1) continue;
+            const tg = targets.find(q => q.cell === cell), cx = (tg.x + .5) * 100, cy = (tg.y + .5) * 100, e = 1 - Math.pow(1 - age, 3);
+            rings += `<circle cx="${cx}" cy="${cy}" r="${(26 + 210 * e).toFixed(1)}" fill="none" stroke="${rgba255(tg.c, 1)}" stroke-width="${(1 + 5 * (1 - age)).toFixed(1)}" opacity="${(0.95 * (1 - age)).toFixed(2)}"/>`;
+          }
+          svg.innerHTML = h + rings;
+          if (burstAt >= 0 && tm >= burstAt && !ended) {
+            ended = true;
+            stage.classList.add('solved'); setWinColor(targets[0].c);
+            targets.forEach((tg, i) => mountWash(tg, true, i * 110, targets.length));
+            run.timers.push(setTimeout(() => { if (fxRun === run) { fxRun = null; removeEventListener('pointerdown', run.skip, true); svg.innerHTML = ''; stage.classList.remove('winning'); done(); } }, 1750 + targets.length * 110));
+          }
+          run.raf = requestAnimationFrame(frame);
+        }
+        run.skip = () => { if (performance.now() - started > 500) finishNow(); };
+        addEventListener('pointerdown', run.skip, true);
+        run.raf = requestAnimationFrame(frame);
+      }
+
+      /* ---------- Modals ---------- */
+      let lastFocus = null;
+      const returnTo = new Map();                                  // modal -> the modal to come back to when it closes
+      const menuLocked = () => !S.puz && S.phase !== 'loading';    // no board yet: the menu is the only place to be
+      function openModal(el, from) {
+        if (!anyModalOpen()) lastFocus = document.activeElement;
+        if (from) returnTo.set(el, from); else returnTo.delete(el);
+        el.classList.add('open'); syncTimer();
+        const m = el.querySelector('.modal'); if (m) { m.scrollTop = 0; m.focus({ preventScroll: true }); }
+      }
+      function swapModal(from, to) { from.classList.remove('open'); openModal(to, from); }   // closing `to` returns to `from`
+      function closeModal(el) {
+        if (el.id === 'menuOverlay' && menuLocked()) return;       // Esc, backdrop and the X all end up here
+        el.classList.remove('open'); syncTimer();
+        const back = returnTo.get(el); returnTo.delete(el);
+        if (back) { if (back.id === 'menuOverlay') updateMenu(); openModal(back); return; }
+        if (menuLocked() && !anyModalOpen()) { updateMenu(); openModal($('#menuOverlay')); return; }   // never strand the player on an empty board
+        if (!anyModalOpen() && lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+      }
+      $$('.modal').forEach(m => m.tabIndex = -1);
+      $$('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeModal(o); }));
+      addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const open = $$('.modal-overlay.open'); if (open.length) closeModal(open[open.length - 1]);
+      });
+
+      /* ---------- Menu ---------- */
+      function updateMenu() {
+        const st = dailyStatus(), btn = $('#dailyBtn'), sub = $('#menuSub'), done = st.phase === 'won' || st.phase === 'assisted';
+        btn.textContent = st.phase === 'won' ? 'Show daily results' : st.phase === 'assisted' ? 'View daily puzzle' : st.phase === 'progress' ? 'Continue daily puzzle' : 'Daily Puzzle';
+        sub.textContent = done ? 'Next daily in ' + fmtCountdown(msToMidnight()) : 'Or choose a difficulty:';
+        $('#menuCloseBtn').style.display = menuLocked() ? 'none' : '';      // nothing to close back to until a board exists
+        $$('.diff-btn').forEach(b => b.classList.toggle('active', S.kind === 'random' && S.diff === b.dataset.difficulty && S.phase !== 'loading'));
+      }
+      setInterval(() => { if ($('#menuOverlay').classList.contains('open')) updateMenu(); }, 1000);
+
+      $('#menuToggleBtn').addEventListener('click', () => { updateMenu(); openModal($('#menuOverlay')); });
+      $('#menuCloseBtn').addEventListener('click', () => closeModal($('#menuOverlay')));
+      $('#rulesBtn').addEventListener('click', () => openModal($('#rulesOverlay')));
+      $('#rulesCloseBtn').addEventListener('click', () => closeModal($('#rulesOverlay')));
+      $('#menuRulesBtn').addEventListener('click', () => swapModal($('#menuOverlay'), $('#rulesOverlay')));
+      $('#menuStatsBtn').addEventListener('click', () => { renderStats(); swapModal($('#menuOverlay'), $('#statsOverlay')); });
+      $('#winCloseBtn').addEventListener('click', () => closeModal($('#winOverlay')));
+      $('#winNewBtn').addEventListener('click', () => { closeModal($('#winOverlay')); updateMenu(); openModal($('#menuOverlay')); });
+      $('#statsBackBtn').addEventListener('click', () => closeModal($('#statsOverlay')));
+      $('#dailyBtn').addEventListener('click', () => {
+        const st = dailyStatus();
+        if (isDaily() && S.puz && S.dateKey === st.key && S.phase !== 'loading') { closeModal($('#menuOverlay')); if (S.phase === 'won' && S.result && !S.result.hinted) openWin(S.result); return; }
+        loadPuzzle('daily', 'medium', { showResults: st.phase === 'won' }); closeModal($('#menuOverlay'));
+      });
+      $('#menuDifficulty').addEventListener('click', e => {
+        const b = e.target.closest('.diff-btn'); if (!b) return;
+        loadPuzzle('random', b.dataset.difficulty); closeModal($('#menuOverlay'));
+      });
+
+      /* ---------- Win modal ---------- */
+      function openWin(res) {
+        $('#winTag').textContent = 'Prism · ' + (res.kind === 'daily' ? 'Daily ' + dayLabel(res.key) : DIFF[res.diff].label);
+        $('#winSwatchLabel').textContent = res.colors.length > 1 ? 'Final colors' : 'Final color';
+        $('#winSwatches').innerHTML = res.colors.map(c => `<div class="swatch-wrap"><div class="swatch" style="background:${rgbCss255(c)}"></div><div class="swatch-val">${c.join(', ')}</div></div>`).join('');
+        $('#winTime').textContent = fmtTime(res.time);
+        $('#winPieces').textContent = `${res.pieces} / ${res.ref}`;
+        const d = res.pieces - res.ref, n = Math.abs(d);
+        const h = res.hints || 0;
+        $('#winNote').textContent = h ? `Solved with ${h} ${h === 1 ? 'hint' : 'hints'}` : d === 0 ? 'The same number as the reference solution' : `${n} ${d < 0 ? 'fewer' : 'more'} ${n === 1 ? 'piece' : 'pieces'} than the reference solution`;
+        openModal($('#winOverlay'));
+      }
+      function winText() {
+        const r = S.result; if (!r) return 'Prism';
+        return `Prism · ${r.kind === 'daily' ? 'Daily ' + dayLabel(r.key) : DIFF[r.diff].label}\nTime ${fmtTime(r.time)} · ${r.pieces}/${r.ref} pieces${r.hints ? ' · ' + r.hints + (r.hints === 1 ? ' hint' : ' hints') : ''}\nMade ${r.colors.map(c => `rgb(${c.join(', ')})`).join(' and ')}`;
+      }
+
+      /* ---------- Statistics ---------- */
+      function renderStats() {
+        const s = computeStats();
+        $('#stAtt').textContent = s.attempted; $('#stAttBest').textContent = 'best ' + s.attemptedBest;
+        $('#stSol').textContent = s.solved; $('#stSolBest').textContent = 'best ' + s.solvedBest;
+        $('#stPct').textContent = s.pct + '%'; $('#stCount').textContent = `${s.wins} of ${s.total}`;
+        $('#stLine').textContent = s.total ? 'Solved days are colored with the color you made.' : 'Solve a daily puzzle to start your history.';
+        $('#dayStrip').innerHTML = s.strip.map(({ k, e }) => {
+          if (!e) return `<div class="dd m" title="${dayLabel(k)}"></div>`;
+          if (e.r === 's') return `<div class="dd s" style="background:${e.c ? rgbCss255(e.c) : '#EEF0F7'}" title="${dayLabel(k)}: solved"></div>`;
+          if (e.r === 'x') return `<div class="dd x" title="${dayLabel(k)}: solution shown"></div>`;
+          return `<div class="dd a" title="${dayLabel(k)}: started"></div>`;
+        }).join('');
+      }
+      function statsText() {
+        const s = computeStats();
+        return `Prism · Daily stats\nAttempted streak ${s.attempted} · Solved streak ${s.solved} · Solve rate ${s.pct}%`;
+      }
+
+      /* ---------- Sharing (image if possible, text otherwise) ---------- */
+      async function shareCard(card, text, filename) {
+        try {
+          if (window.html2canvas) {
+            const canvas = await html2canvas(card, { backgroundColor: '#161922', scale: 2, logging: false });
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+            if (blob) {
+              const file = new File([blob], filename, { type: 'image/png' });
+              if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+              if (navigator.clipboard && window.ClipboardItem) { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); toast('Image copied to clipboard'); return; }
+              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Image saved'); return;
+            }
+          }
+        } catch (err) { if (err && err.name === 'AbortError') return; }
+        try { if (navigator.share) { await navigator.share({ text }); return; } } catch (err) { if (err && err.name === 'AbortError') return; }
+        try { await navigator.clipboard.writeText(text); toast('Copied to clipboard'); } catch (err) { toast('Sharing is not available here'); }
+      }
+      $('#shareBtn').addEventListener('click', () => shareCard($('#winCard'), winText(), 'prism-result.png'));
+      $('#statsShareBtn').addEventListener('click', () => shareCard($('#statsCard'), statsText(), 'prism-stats.png'));
+
+      /* ---------- Rules: every demo is drawn with the in-game icons and beams ---------- */
+      function demoScene(inner, beams) {
+        const grid = `<path d="M100 50V250M200 50V250M50 100H250M50 200H250" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`;
+        let glow = '', core = '', arr = '';
+        for (const b of beams || []) { const p = beamPaint(b.x0, b.y0, b.x1, b.y1, b.v); glow += p.glow; core += p.core; arr += arrowSvg(b.ax, b.ay, b.d, b.v); }
+        return `<svg viewBox="50 50 200 200" role="img" aria-hidden="true"><rect x="50" y="50" width="200" height="200" rx="16" fill="#080A0F"/>${grid}<g filter="url(#fGlow)">${glow}</g>${core}${arr}${inner}</svg>`;
+      }
+      const WHITE = [1, 1, 1], ORANGE = [1, .55, 0];
+      const beam = (x0, y0, x1, y1, v, ax, ay, d) => ({ x0, y0, x1, y1, v, ax, ay, d });
+      const RULE_DEMOS = {
+        emitter: demoScene(iconAt('E', 0, {}, 100, 100), [beam(150, 150, 250, 150, WHITE, 210, 150, 0)]),
+        target: demoScene(iconAt('T', 0, { color: 'rgb(255,128,0)', ok: true }, 100, 100), [beam(50, 150, 150, 150, [1, .5, 0], 76, 150, 0)]),
+        mirror: demoScene(iconAt('M', 0, {}, 100, 100), [beam(50, 150, 150, 150, WHITE, 76, 150, 0), beam(150, 150, 150, 50, WHITE, 150, 76, 3)]),
+        dimmer: demoScene(iconAt('D', 0, {}, 100, 100), [beam(50, 150, 150, 150, WHITE, 76, 150, 0), beam(150, 150, 250, 150, [.5, .5, .5], 224, 150, 0)]),
+        splitter: demoScene(iconAt('S', 0, {}, 100, 100), [beam(50, 150, 150, 150, ORANGE, 76, 150, 0), beam(150, 150, 150, 50, ORANGE, 150, 72, 3), beam(150, 150, 150, 250, ORANGE, 150, 228, 1)]),
+        split: demoScene(iconAt('P', 0, { role: 'in' }, 100, 100), [beam(50, 150, 150, 150, WHITE, 76, 150, 0),
+        beam(150, 150, 150, 50, [1, 0, 0], 150, 72, 3), beam(150, 150, 250, 150, [0, 1, 0], 226, 150, 0), beam(150, 150, 150, 250, [0, 0, 1], 150, 228, 1)]),
+        merge: demoScene(iconAt('P', 0, { role: 'out' }, 100, 100), [beam(150, 50, 150, 150, [1, 0, 0], 150, 72, 1), beam(150, 250, 150, 150, [0, 0, 1], 150, 228, 3), beam(150, 150, 50, 150, [1, 0, 1], 76, 150, 2)]),
+      };
+      function buildRules() {
+        const item = (k, h, p) => `<div class="rule"><div class="demo">${RULE_DEMOS[k]}</div><div><h3>${h}</h3><p>${p}</p></div></div>`;
+        $('#rulesBody').innerHTML =
+          `<p class="rules-lead">Guide the white beam through the board so the light reaching each target matches its color exactly.</p>` +
+          item('emitter', 'Emitter', 'Fires a white beam R255 G255 B255') +
+          item('target', 'Target', 'Light arriving here must match the color of the tile.') +
+          item('mirror', 'Mirror', 'Fixed in place. Turns a beam 90° from either side.') +
+          item('dimmer', 'Dimmer', 'Halves the brightness of any beam that passes through it, from any direction.') +
+          item('splitter', 'Splitter', 'Splits a beam into multiple beams at full strength.') +
+          item('split', 'Prism: disperse', 'White light entering the marked side splits into red, green and blue.') +
+          item('merge', 'Prism: merge', 'Light entering any other side is added together, whatever its color.') +''
+          // `<div class="rules-h">Tips</div><ul class="tips">` +
+          // `<li>Drag pieces from the tray onto the board. <b>Tap</b> a placed piece to rotate it, or drag it off to put it back.</li>` +
+          // `<li>Arrows show which way light travels, in the color of their own beam.</li>` +
+          // `<li>Beams that overlap look blended, but only a prism actually combines them. Follow the arrows to tell them apart.</li>` +
+          // `<li>Tap <b>rgb</b> under the board to show the value of each beam.</li>` +
+          // `<li>A target accepts one beam. A beam that feeds back into itself is a loop, and a loop can't win.</li></ul>`
+        ;
+      }
+
+      /* ---------- PWA: install button and service worker ----------
+         The button sits left of Rules and is shown everywhere except inside the installed app.
+         Chrome, Edge and Android give it a real install dialog; other browsers get short instructions. */
+      let deferredInstallPrompt = null;
+      const installBtn = $('#addHomeBtn');
+      const isInstalled = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+      const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      installBtn.hidden = isInstalled();
+      addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; });
+      addEventListener('appinstalled', () => { deferredInstallPrompt = null; installBtn.hidden = true; toast('Prism is installed.'); });
+      installBtn.addEventListener('click', async () => {
+        if (deferredInstallPrompt) {
+          const p = deferredInstallPrompt; deferredInstallPrompt = null;      // a prompt can only be used once
+          p.prompt(); try { await p.userChoice; } catch (e) { /* ignore */ }
+          return;
+        }
+        toast(isIOS() ? 'To install: tap the Share button, then "Add to Home Screen".' : 'To install: open your browser menu and choose "Install app" or "Add to Home Screen".', 5200);
+      });
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+        addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ }));
+      }
+
+      /* ---------- Boot ---------- */
+      let resizeT = 0;
+      addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { fitTargets(); if (S.phase === 'won' && !fxRun) applyWinGlow(); }, 150); });
+      (function pruneCache() {                      // keep only today's cached puzzle
+        try {
+          const today = dateKey(), pre = `${GAME_KEY}-puz1:`, drop = [];
+          for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre) && !k.endsWith(':' + today)) drop.push(k); }
+          drop.forEach(k => localStorage.removeItem(k));
+        } catch (e) { /* storage unavailable */ }
+      })();
+      buildCells(); buildRules(); render(); updateMenu();
+      openModal($('#menuOverlay'));          // the menu is the first thing the player sees; nothing is generated yet
+    })();
+
+  </script>
+</body>
+
+</html>
