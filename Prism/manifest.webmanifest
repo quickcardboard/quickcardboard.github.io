@@ -1,9 +1,9 @@
 {
-  "id": "./prism.html",
+  "id": "./index.html",
   "name": "Prism",
   "short_name": "Prism",
-  "description": "A daily color-mixing puzzle. Steer a white beam with mirrors, dimmers, splitters and prisms until the light matches the target.",
-  "start_url": "./prism.html",
+  "description": "A daily color-mixing puzzle. Direct and remix a white beam of light to match the target color.",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0D0F15",
