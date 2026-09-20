@@ -2908,7 +2908,7 @@
         $('#stAtt').textContent = s.attempted; $('#stAttBest').textContent = 'best ' + s.attemptedBest;
         $('#stSol').textContent = s.solved; $('#stSolBest').textContent = 'best ' + s.solvedBest;
         $('#stPct').textContent = s.pct + '%'; $('#stCount').textContent = `${s.wins} of ${s.total}`;
-        $('#stLine').textContent = s.total ? 'Solved days are colored with the color you made.' : 'Solve a daily puzzle to start your history.';
+        $('#stLine').textContent = s.total ? 'Your color history.' : 'Solve a daily puzzle to start your history.';
         $('#dayStrip').innerHTML = s.strip.map(({ k, e }) => {
           if (!e) return `<div class="dd m" title="${dayLabel(k)}"></div>`;
           if (e.r === 's') return `<div class="dd s" style="background:${e.c ? rgbCss255(e.c) : '#EEF0F7'}" title="${dayLabel(k)}: solved"></div>`;
