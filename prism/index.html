@@ -2899,7 +2899,7 @@
       }
       function winText() {
         const r = S.result; if (!r) return 'Prism';
-        return `Prism · ${r.kind === 'daily' ? 'Daily ' + dayLabel(r.key) : DIFF[r.diff].label}\nTime ${fmtTime(r.time)} · ${r.pieces}/${r.ref} pieces${r.hints ? ' · ' + r.hints + (r.hints === 1 ? ' hint' : ' hints') : ''}\nMade ${r.colors.map(c => `rgb(${c.join(', ')})`).join(' and ')}`;
+        return `I solved today's Prism! · ${r.kind === 'daily' ? 'Daily ' + dayLabel(r.key) : DIFF[r.diff].label}\nTime ${fmtTime(r.time)} · ${r.pieces}/${r.ref} pieces${r.hints ? ' · ' + r.hints + (r.hints === 1 ? ' hint' : ' hints') : ''}\nMade ${r.colors.map(c => `rgb(${c.join(', ')})`).join(' and ')}\nquickcardboard.com/prism`;
       }
 
       /* ---------- Statistics ---------- */
