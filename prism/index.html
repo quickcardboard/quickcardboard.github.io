@@ -2470,7 +2470,7 @@
         drag = { ...info, sx: e.clientX, sy: e.clientY, moved: false, ghost: null, touch: e.pointerType !== 'mouse', size: $('#stage').getBoundingClientRect().width / 6 };
         addEventListener('pointermove', onMove); addEventListener('pointerup', onUp); addEventListener('pointercancel', onUp);
       }
-      const dropPoint = (e, d) => ({ x: e.clientX, y: e.clientY - (d.touch ? d.size * 0.85 : 0) });   // lift the ghost above a finger
+      const dropPoint = (e, d) => ({ x: e.clientX, y: e.clientY });
       function onMove(e) {
         if (!drag) return;
         if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) {
