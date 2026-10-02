@@ -1,0 +1,68 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Tactics – Story Designer</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#dfe3e9;color:#2b3040;display:flex;height:100vh}
+.p{width:270px;padding:10px;overflow:auto;background:#fff;box-shadow:0 0 8px #0003;box-sizing:border-box;font-size:13px;flex:none}
+.p button,.p select,.p input,.p textarea{margin:2px 0;padding:6px;font-size:13px;box-sizing:border-box}
+.p input[type=text],.p input[type=number],.p select,.p textarea{width:100%}
+#wrap{flex:1;overflow:auto}canvas{touch-action:none;background:#f6f7fa}
+button.on{background:#2f6bff;color:#fff}h4{margin:12px 0 4px}.row{display:flex;gap:4px}.row>*{flex:1;min-width:0}
+</style></head><body>
+<div class="p"><b style="font-size:15px">STORY DESIGNER</b>
+<h4>Story</h4><input type="text" id="nm" value="My Story">
+<button id="ex">Export story .json</button><button id="im">Import story…</button><input type="file" id="fi" accept=".json" style="display:none">
+<h4>Levels</h4><button id="ll">Load level files…</button><input type="file" id="lf" accept=".json" multiple style="display:none"><div id="ls"><small>none loaded</small></div>
+<h4>Add node</h4><div id="add"></div>
+<h4>Mode</h4><div class="row" id="md"></div><small>Link: select a node, then tap another to toggle a path to it.</small>
+<button id="vd">Validate</button></div>
+<div id="wrap"><canvas id="cv" width="1800" height="1100"></canvas></div>
+<div class="p" id="in"></div>
+<script>
+const $=id=>document.getElementById(id),cv=$("cv"),g=cv.getContext("2d"),NW=150,NH=54;
+const TYPES={start:"#2f6bff",level:"#4b5468",boss:"#e5383b",cutscene:"#8a5cf6",event:"#e58a2a",training:"#2a9d6f",recruit:"#2a9d6f",revive:"#2a9d6f",end:"#2b3040"};
+let S={format:"tt-story",v:1,name:"My Story",start:null,levels:{},nodes:[]},mode="move",sel=null,dragN=null,off=[0,0],n=1;
+$("add").innerHTML=Object.keys(TYPES).map(t=>`<button data-t="${t}" style="width:calc(50% - 4px);margin:2px;border-left:6px solid ${TYPES[t]}">${t}</button>`).join("");
+$("add").onclick=e=>{const t=e.target.dataset.t;if(!t)return;const o={id:"n"+n++,type:t,title:t[0].toUpperCase()+t.slice(1),x:40+S.nodes.length%6*170,y:40+Math.floor(S.nodes.length/6)*110,levelId:"",text:"",dialogue:[],reward:{credits:0,xp:0,points:0,recruit:"",item:""},next:[]};S.nodes.push(o);if(t=="start"&&!S.start)S.start=o.id;sel=o.id;ui()};
+$("md").innerHTML=["move","link","delete"].map(m=>`<button data-m="${m}">${m}</button>`).join("");
+$("md").onclick=e=>{if(e.target.dataset.m){mode=e.target.dataset.m;ui()}};
+const nd=id=>S.nodes.find(o=>o.id==id),at=(x,y)=>[...S.nodes].reverse().find(o=>x>=o.x&&x<=o.x+NW&&y>=o.y&&y<=o.y+NH);
+const pt=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+cv.onpointerdown=e=>{const[x,y]=pt(e),o=at(x,y);if(!o){sel=null;ui();return}
+ if(mode=="delete"){S.nodes=S.nodes.filter(q=>q!=o);S.nodes.forEach(q=>q.next=q.next.filter(i=>i!=o.id));if(S.start==o.id)S.start=null;sel=null}
+ else if(mode=="link"&&sel&&sel!=o.id){const s=nd(sel),i=s.next.indexOf(o.id);i>=0?s.next.splice(i,1):s.next.push(o.id)}
+ else{sel=o.id;dragN=o;off=[x-o.x,y-o.y]}ui()};
+cv.onpointermove=e=>{if(dragN&&mode=="move"){const[x,y]=pt(e);dragN.x=Math.max(0,x-off[0]);dragN.y=Math.max(0,y-off[1]);draw()}};
+addEventListener("pointerup",()=>dragN=null);
+function draw(){g.clearRect(0,0,cv.width,cv.height);g.font="13px system-ui";
+ for(const o of S.nodes)for(const i of o.next){const t=nd(i);if(!t)continue;const a=[o.x+NW/2,o.y+NH/2],b=[t.x+NW/2,t.y+NH/2],an=Math.atan2(b[1]-a[1],b[0]-a[0]);
+  // stop arrow at target box edge
+  const k=Math.min(NW/2/Math.abs(Math.cos(an)||1e-9),NH/2/Math.abs(Math.sin(an)||1e-9)),e=[b[0]-Math.cos(an)*k,b[1]-Math.sin(an)*k];
+  g.strokeStyle="#2b3040";g.lineWidth=2;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(e[0],e[1]);g.stroke();g.fillStyle="#2b3040";g.beginPath();g.moveTo(e[0],e[1]);g.lineTo(e[0]-Math.cos(an-.4)*11,e[1]-Math.sin(an-.4)*11);g.lineTo(e[0]-Math.cos(an+.4)*11,e[1]-Math.sin(an+.4)*11);g.fill()}
+ for(const o of S.nodes){g.fillStyle="#fff";g.strokeStyle=TYPES[o.type];g.lineWidth=o.id==sel?4:2;g.beginPath();g.roundRect(o.x,o.y,NW,NH,10);g.fill();g.stroke();
+  g.fillStyle=TYPES[o.type];g.fillRect(o.x+8,o.y+8,4,NH-16);g.fillStyle="#2b3040";g.fillText(o.title.slice(0,18),o.x+20,o.y+22);g.fillStyle="#7a8395";g.fillText(o.type+(o.levelId?" · "+o.levelId.slice(0,10):"")+(S.start==o.id?" ★":""),o.x+20,o.y+40)}}
+function ui(){[...$("md").children].forEach(b=>b.className=b.dataset.m==mode?"on":"");
+ $("ls").innerHTML=Object.keys(S.levels).map(k=>`<div>• ${k}</div>`).join("")||"<small>none loaded</small>";draw();insp()}
+function insp(){const o=nd(sel),el=$("in");if(!o){el.innerHTML="<small>Select a node.</small>";return}
+ const r=o.reward;el.innerHTML=`<b>${o.id}</b><input type="text" id="a_t" value="${o.title.replace(/"/g,"&quot;")}">
+ <select id="a_ty">${Object.keys(TYPES).map(t=>`<option ${t==o.type?"selected":""}>${t}</option>`).join("")}</select>
+ <select id="a_l"><option value="">(no level)</option>${Object.keys(S.levels).map(k=>`<option ${k==o.levelId?"selected":""}>${k}</option>`).join("")}</select>
+ Briefing / description<textarea id="a_x" rows="3">${o.text}</textarea>
+ Dialogue / cutscene (one line each, “Speaker: text”)<textarea id="a_d" rows="7">${o.dialogue.map(d=>d.speaker+": "+d.text).join("\n")}</textarea>
+ <h4>Rewards</h4><div class="row"><input type="number" id="r_c" value="${r.credits}" title="credits"><input type="number" id="r_x" value="${r.xp}" title="XP"><input type="number" id="r_p" value="${r.points}" title="upgrade points"></div><small>credits · XP · upgrade points</small>
+ <input type="text" id="r_r" placeholder="Recruit soldier name" value="${r.recruit}"><input type="text" id="r_i" placeholder="Item reward" value="${r.item}">
+ <h4>Leads to</h4>${o.next.map(i=>`<div>→ ${nd(i)?nd(i).title:i} <button data-rm="${i}">✕</button></div>`).join("")||"<small>nothing</small>"}
+ <button id="a_s">Set as story start</button>`;
+ const B=(id,f)=>$(id).oninput=e=>{f(e.target.value);draw()};B("a_t",v=>o.title=v);B("a_x",v=>o.text=v);B("r_c",v=>r.credits=+v);B("r_x",v=>r.xp=+v);B("r_p",v=>r.points=+v);B("r_r",v=>r.recruit=v);B("r_i",v=>r.item=v);
+ B("a_d",v=>o.dialogue=v.split("\n").filter(s=>s.trim()).map(s=>{const i=s.indexOf(":");return i>0?{speaker:s.slice(0,i).trim(),text:s.slice(i+1).trim()}:{speaker:"",text:s}}));
+ $("a_ty").onchange=e=>{o.type=e.target.value;ui()};$("a_l").onchange=e=>{o.levelId=e.target.value;ui()};$("a_s").onclick=()=>{S.start=o.id;ui()};
+ el.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{o.next=o.next.filter(i=>i!=b.dataset.rm);ui()})}
+$("ll").onclick=()=>$("lf").click();
+$("lf").onchange=async e=>{for(const f of e.target.files){try{const L=JSON.parse(await f.text());if(L.format=="tt-level")S.levels[L.name||f.name]=L}catch(x){}}ui()};
+$("nm").oninput=()=>S.name=$("nm").value;
+$("ex").onclick=()=>{S.name=$("nm").value;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}));a.download=(S.name||"story").replace(/\W+/g,"_")+".story.json";a.click()};
+$("im").onclick=()=>$("fi").click();
+$("fi").onchange=e=>e.target.files[0].text().then(t=>{const o=JSON.parse(t);if(o.format!="tt-story")return alert("Not a story file");S=o;$("nm").value=o.name;n=1+Math.max(0,...S.nodes.map(q=>parseInt(q.id.slice(1))||0));sel=null;ui()});
+$("vd").onclick=()=>{const m=[];if(!S.start)m.push("No start node set.");const inc=new Set(S.nodes.flatMap(o=>o.next));
+ S.nodes.forEach(o=>{if(["level","boss"].includes(o.type)&&!S.levels[o.levelId])m.push(o.title+": no level attached");if(o.id!=S.start&&!inc.has(o.id))m.push(o.title+": unreachable");if(o.type!="end"&&!o.next.length)m.push(o.title+": dead end")});alert(m.join("\n")||"Looks good.")};
+ui();
+</script></body></html>

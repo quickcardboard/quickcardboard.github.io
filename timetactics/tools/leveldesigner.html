@@ -1,0 +1,93 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Time Tactics – Level Designer</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#dfe3e9;color:#2b3040;display:flex;height:100vh}
+#side{width:260px;padding:10px;overflow:auto;background:#fff;box-shadow:0 0 8px #0003;box-sizing:border-box;font-size:13px;flex:none}
+#side button,#side select,#side input{margin:2px 0;padding:6px;font-size:13px;box-sizing:border-box}
+#side input[type=text],#side input[type=number],#side select{width:100%}
+.tb button{width:calc(50% - 4px);margin:2px}.tb button.on{background:#2f6bff;color:#fff}
+#wrap{flex:1;overflow:auto;padding:10px}canvas{background:#fff;touch-action:none;box-shadow:0 2px 10px #0003}
+h4{margin:12px 0 4px}.row{display:flex;gap:4px}.row>*{flex:1;min-width:0}
+</style></head><body>
+<div id="side">
+<b style="font-size:15px">LEVEL DESIGNER</b>
+<h4>Level</h4><input type="text" id="nm" value="New Level">
+<div class="row"><input type="number" id="w" value="16" min="8" max="60"><input type="number" id="h" value="16" min="8" max="60"><input type="number" id="z" value="4" min="0" max="8" title="Safe zone rows"></div>
+<small>width · height · safe-zone rows (0 = none)</small>
+<button id="rs">Apply size</button><button id="bd">Add border + zone wall</button><button id="cl">Clear all</button>
+<select id="ob"><option value="eliminate">Objective: eliminate all</option><option value="reach">Objective: reach exit marker</option><option value="collect">Objective: collect items</option><option value="protect">Objective: protect target</option><option value="hostage">Objective: rescue hostage(s) to exit</option></select>
+<div class="row"><input type="number" id="on" value="0" title="Items needed (0 = all placed)"><input type="number" id="os" value="30" title="Seconds to hold (game time)"><input type="number" id="oh" value="10" title="Target HP"><input type="number" id="oc" value="2" title="Hostage HP"></div>
+<small>items needed (0=all) · hold secs · target HP · hostage HP</small>
+<h4>Tools</h4><div class="tb" id="tb"></div>
+<h4>Enemy to place</h4><select id="et"></select>
+<h4>Selected enemy</h4><div id="in"><small>None. Use “Select enemy” or place one.</small></div>
+<h4>File</h4><button id="ex">Export .json</button> <button id="im">Import…</button> <button id="ts">Play-test</button><input type="file" id="fi" accept=".json" style="display:none">
+<p><small>Path tool: select an enemy, then tap cells to add waypoints. No waypoints = stationary guard. Enemy speed/HP come from js/enemies.js.</small></p>
+</div>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<script src="../js/enemies.js"></script>
+<script>
+const $=id=>document.getElementById(id),C=28,cv=$("cv"),g=cv.getContext("2d");
+const TOOLS=[["wall","Full wall",2],["half","Half wall",1],["qh","¼ wall ─",3],["qv","¼ wall │",4],["erase","Erase",0],["spawn","Squad spawn"],["enemy","Place enemy"],["path","Draw path"],["select","Select enemy"],["exit","Exit marker"],["item","Collect item"],["target","Protect target"],["host","Hostage"]];
+let L,tool="wall",sel=-1,paint=false;
+function fresh(w,h,z){L={format:"tt-level",v:1,name:$("nm").value,w,h,zy:h-z,tiles:new Array(w*h).fill(0),spawns:[],enemies:[],objective:"eliminate",exit:null,items:[],n:0,target:null,secs:30,hostages:[]}}
+function border(){const{w,h,zy}=L;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x==0||y==0||x==w-1||y==h-1||(zy<h&&y==zy-1&&Math.abs(x-(w>>1))>1))L.tiles[y*w+x]=2}
+fresh(16,16,4);border();
+$("tb").innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}">${t[1]}</button>`).join("");
+$("et").innerHTML=Object.entries(ET).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+$("tb").onclick=e=>{if(e.target.dataset.t){tool=e.target.dataset.t;ui()}};
+function ui(){[...$("tb").children].forEach(b=>b.className=b.dataset.t==tool?"on":"");draw();insp()}
+$("rs").onclick=()=>{const w=+$("w").value,h=+$("h").value,z=+$("z").value,o=L,n=new Array(w*h).fill(0);for(let y=0;y<Math.min(h,o.h);y++)for(let x=0;x<Math.min(w,o.w);x++)n[y*w+x]=o.tiles[y*o.w+x];
+ L={...o,w,h,zy:h-z,tiles:n,spawns:o.spawns.filter(s=>s.x<w&&s.y<h),enemies:o.enemies.filter(s=>s.x<w&&s.y<h)};sel=-1;ui()};
+$("bd").onclick=()=>{L.zy=L.h-(+$("z").value);border();draw()};
+$("cl").onclick=()=>{if(confirm("Clear everything?")){fresh(L.w,L.h,L.h-L.zy);sel=-1;ui()}};
+$("ob").onchange=()=>L.objective=$("ob").value;$("nm").oninput=()=>L.name=$("nm").value;
+const cell=e=>{const r=cv.getBoundingClientRect();return[Math.floor((e.clientX-r.left)/C),Math.floor((e.clientY-r.top)/C)]};
+const enAt=(x,y)=>L.enemies.findIndex(d=>Math.floor(d.x)==x&&Math.floor(d.y)==y);
+function act(e,first){const[x,y]=cell(e);if(x<0||y<0||x>=L.w||y>=L.h)return;const t=TOOLS.find(a=>a[0]==tool);
+ if(t[2]!=null){L.tiles[y*L.w+x]=t[2];if(tool=="erase"){const at=o=>Math.floor(o.x)==x&&Math.floor(o.y)==y;L.items=L.items.filter(o=>!at(o));L.hostages=L.hostages.filter(o=>!at(o));if(L.target&&at(L.target))L.target=null;L.spawns=L.spawns.filter(o=>!at(o));L.enemies=L.enemies.filter(o=>!at(o));sel=-1;insp()}}
+ else if(!first)return;
+ else if(tool=="spawn"){const i=L.spawns.findIndex(s=>Math.floor(s.x)==x&&Math.floor(s.y)==y);i>=0?L.spawns.splice(i,1):L.spawns.push({x:x+.5,y:y+.5})}
+ else if(tool=="enemy"){const i=enAt(x,y);if(i>=0)sel=i;else{L.enemies.push({type:$("et").value,x:x+.5,y:y+.5,face:Math.PI/2,loop:"loop",path:[]});sel=L.enemies.length-1}insp()}
+ else if(tool=="select"){sel=enAt(x,y);insp()}
+ else if(tool=="path"){if(sel>=0)L.enemies[sel].path.push([x+.5,y+.5]);insp()}
+ else if(tool=="exit"){L.exit={x:x+.5,y:y+.5}}
+ else if(tool=="item"){const i=L.items.findIndex(o=>Math.floor(o.x)==x&&Math.floor(o.y)==y);i>=0?L.items.splice(i,1):L.items.push({x:x+.5,y:y+.5})}
+ else if(tool=="target"){L.target={x:x+.5,y:y+.5,hp:+$("oh").value||10}}
+ else if(tool=="host"){const i=L.hostages.findIndex(o=>Math.floor(o.x)==x&&Math.floor(o.y)==y);i>=0?L.hostages.splice(i,1):L.hostages.push({x:x+.5,y:y+.5,hp:+$("oc").value||2})}
+ draw()}
+cv.onpointerdown=e=>{paint=true;act(e,true)};cv.onpointermove=e=>{if(paint)act(e,false)};addEventListener("pointerup",()=>paint=false);
+function insp(){const d=L.enemies[sel],el=$("in");if(!d){el.innerHTML="<small>None. Use “Select enemy” or place one.</small>";return}
+ el.innerHTML=`<select id="i_t">${Object.entries(ET).map(([k,v])=>`<option value="${k}" ${k==d.type?"selected":""}>${v.name}</option>`).join("")}</select>
+ <small>${ET[d.type].desc}</small><br>Facing° (0=E, 90=S)<input type="number" id="i_f" value="${Math.round(d.face*180/Math.PI)}">
+ <select id="i_l"><option value="loop" ${d.loop=="loop"?"selected":""}>Patrol: loop</option><option value="pingpong" ${d.loop=="pingpong"?"selected":""}>Patrol: back-and-forth</option></select>
+ <small>${d.path.length} waypoints${d.path.length?"":" (guard)"}</small><div class="row"><button id="i_u">Undo point</button><button id="i_c">Clear path</button></div><button id="i_d">Delete enemy</button>`;
+ $("i_t").onchange=e=>{d.type=e.target.value;ui()};$("i_f").oninput=e=>{d.face=(+e.target.value||0)*Math.PI/180;draw()};$("i_l").onchange=e=>{d.loop=e.target.value;draw()};
+ $("i_u").onclick=()=>{d.path.pop();ui()};$("i_c").onclick=()=>{d.path=[];ui()};$("i_d").onclick=()=>{L.enemies.splice(sel,1);sel=-1;ui()}}
+function draw(){const{w,h,zy}=L;cv.width=w*C;cv.height=h*C;g.fillStyle="#f6f7fa";g.fillRect(0,0,w*C,h*C);
+ if(zy<h){g.fillStyle="rgba(47,107,255,.1)";g.fillRect(0,zy*C,w*C,(h-zy)*C)}
+ g.strokeStyle="#e4e8ee";for(let i=0;i<=w;i++){g.beginPath();g.moveTo(i*C,0);g.lineTo(i*C,h*C);g.stroke()}for(let i=0;i<=h;i++){g.beginPath();g.moveTo(0,i*C);g.lineTo(w*C,i*C);g.stroke()}
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=L.tiles[y*w+x],X=x*C,Y=y*C;if(!k)continue;
+  if(k==2){g.fillStyle="#5a647844";g.fillRect(X+3,Y+3,C,C);g.fillStyle="#fff";g.fillRect(X,Y,C,C);g.strokeStyle="#4b5468";g.strokeRect(X+.5,Y+.5,C-1,C-1)}
+  else if(k==1){g.fillStyle="#bfe6ee";g.fillRect(X,Y,C,C);g.strokeStyle="#3f7c8a";g.strokeRect(X+.5,Y+.5,C-1,C-1)}
+  else{g.fillStyle="#98a1b0";const a=C*.375,b=C*.25;k==3?g.fillRect(X,Y+a,C,b):g.fillRect(X+a,Y,b,C);g.strokeStyle="#4b5468";k==3?g.strokeRect(X+.5,Y+a+.5,C-1,b-1):g.strokeRect(X+a+.5,Y+.5,b-1,C-1)}}
+g.textAlign="center";
+ L.items.forEach(o=>{g.fillStyle="#35d0e8";g.beginPath();g.moveTo(o.x*C,o.y*C-9);g.lineTo(o.x*C+6,o.y*C);g.lineTo(o.x*C,o.y*C+9);g.lineTo(o.x*C-6,o.y*C);g.fill()});
+ if(L.target){const o=L.target;g.fillStyle="#46d9b0";g.beginPath();g.moveTo(o.x*C,o.y*C-12);g.lineTo(o.x*C+9,o.y*C);g.lineTo(o.x*C,o.y*C+12);g.lineTo(o.x*C-9,o.y*C);g.fill();g.fillStyle="#16584a";g.fillText("CORE",o.x*C,o.y*C+24)}
+ L.hostages.forEach(o=>{g.fillStyle="#f2c14e";g.beginPath();g.arc(o.x*C,o.y*C,C*.32,0,7);g.fill();g.fillStyle="#2b3040";g.fillText("H",o.x*C,o.y*C+4)});
+ if(L.exit){g.strokeStyle="#2f6bff";g.setLineDash([4,3]);g.beginPath();g.arc(L.exit.x*C,L.exit.y*C,C,0,7);g.stroke();g.setLineDash([]);g.fillStyle="#2f6bff";g.fillText("EXIT",L.exit.x*C-11,L.exit.y*C+4)}
+ L.spawns.forEach((s,i)=>{g.fillStyle="#2f6bff";g.beginPath();g.arc(s.x*C,s.y*C,C*.32,0,7);g.fill();g.fillStyle="#fff";g.textAlign="center";g.fillText(i+1,s.x*C,s.y*C+4)});
+ L.enemies.forEach((d,i)=>{const P=[[d.x,d.y],...d.path];g.strokeStyle="#e5383b";g.setLineDash([5,4]);g.beginPath();P.forEach((p,j)=>j?g.lineTo(p[0]*C,p[1]*C):g.moveTo(p[0]*C,p[1]*C));if(P.length>1&&d.loop=="loop")g.lineTo(d.x*C,d.y*C);g.stroke();g.setLineDash([]);
+  d.path.forEach((p,j)=>{g.fillStyle="#e5383b";g.beginPath();g.arc(p[0]*C,p[1]*C,4,0,7);g.fill();g.fillStyle="#9b1f23";g.fillText(j+1,p[0]*C+8,p[1]*C-4)});
+  g.fillStyle=ET[d.type].melee?"#ff6a3d":"#e5383b";g.beginPath();if(ET[d.type].melee){g.moveTo(d.x*C,d.y*C-C*.4);g.lineTo(d.x*C+C*.4,d.y*C);g.lineTo(d.x*C,d.y*C+C*.4);g.lineTo(d.x*C-C*.4,d.y*C)}else g.arc(d.x*C,d.y*C,C*.32,0,7);g.fill();
+  g.strokeStyle="#2b3040";g.lineWidth=2;g.beginPath();g.moveTo(d.x*C,d.y*C);g.lineTo(d.x*C+Math.cos(d.face)*C*.6,d.y*C+Math.sin(d.face)*C*.6);g.stroke();g.lineWidth=1;
+  if(i==sel){g.strokeStyle="#2f6bff";g.lineWidth=2;g.strokeRect(Math.floor(d.x)*C+1,Math.floor(d.y)*C+1,C-2,C-2);g.lineWidth=1}})}
+function sync(){L.name=$("nm").value;L.objective=$("ob").value;L.n=+$("on").value||0;L.secs=+$("os").value||30;if(L.target)L.target.hp=+$("oh").value||10;L.hostages.forEach(h=>h.hp=+$("oc").value||2);
+ const w=[],o=L.objective;if(!L.spawns.length)w.push("No squad spawn placed.");if(o=="collect"&&!L.items.length)w.push("Collect: no items placed.");if(o=="protect"&&!L.target)w.push("Protect: no target placed (and keep it outside the safe zone).");
+ if(o=="hostage"&&(!L.hostages.length||!L.exit))w.push("Hostage: needs at least one hostage and an exit marker.");if(o=="reach"&&!L.exit)w.push("Reach: no exit marker.");if(L.zy<L.h&&L.target&&L.target.y>=L.zy)w.push("Target is inside the safe zone; enemies cannot attack it there.");return w}
+$("ex").onclick=()=>{const w=sync();if(w.length&&!confirm("Warnings:\n"+w.join("\n")+"\nExport anyway?"))return;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(L)],{type:"application/json"}));a.download=(L.name||"level").replace(/\W+/g,"_")+".json";a.click()};
+$("im").onclick=()=>$("fi").click();
+$("fi").onchange=e=>e.target.files[0].text().then(t=>{const o=JSON.parse(t);if(o.format!="tt-level")return alert("Not a level file");L=o;$("nm").value=o.name;$("w").value=o.w;$("h").value=o.h;$("z").value=o.h-o.zy;$("ob").value=o.objective||"eliminate";L.items=L.items||[];L.hostages=L.hostages||[];L.target=L.target||null;$("on").value=L.n||0;$("os").value=L.secs||30;$("oh").value=(L.target&&L.target.hp)||10;$("oc").value=(L.hostages[0]&&L.hostages[0].hp)||2;sel=-1;ui()});
+$("ts").onclick=()=>{const w=sync();if(w.length)alert(w.join("\n"));try{localStorage.setItem("tt_test",JSON.stringify(L));window.open("../index.html?test")}catch(x){alert("Play-test needs localStorage. Export and load the file in the game menu instead.")}};
+ui();
+</script></body></html>

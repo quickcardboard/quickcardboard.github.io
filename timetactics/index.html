@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Time Tactics</title>
+<link rel="stylesheet" href="css/game.css"></head><body>
+<canvas id="c"></canvas><div id="pulse"></div>
+<div id="hud"><span id="h1"></span><span id="h2"></span><span id="h3" style="display:none"></span></div>
+<button id="hx">✕ CANCEL</button><button id="mb" title="Menu">☰</button><button id="sb" title="Sound">🔊</button><div id="toast"></div><div id="menu"></div>
+<button id="pp">❚❚</button><button id="rx">✕ END REPLAY</button>
+<div id="ov"><div><h1>TIME TACTICS</h1><p id="ot">Pause (❚❚) to plan orders. Tap a soldier, pick a command. Drag to pan, pinch to zoom.</p>
+<div id="cfg">
+<label for="c_size">Level size</label><select id="c_size"><option value="16x16" selected>16 × 16</option><option value="16x24">16 × 24</option><option value="24x24">24 × 24</option><option value="36x36">36 × 36</option></select>
+<label for="c_en">Enemies</label><input id="c_en" type="number" min="1" max="40" value="5">
+<label for="c_eh">Enemy health</label><input id="c_eh" type="number" min="1" max="50" value="5">
+<label for="c_sq">Squad size</label><input id="c_sq" type="number" min="1" max="10" value="3">
+<label for="c_sh">Squad health</label><input id="c_sh" type="number" min="1" max="50" value="3">
+<label for="c_den">Obstacle density</label><select id="c_den"><option value=".025">Low</option><option value=".05" selected>Medium</option><option value=".09">High</option></select>
+<label for="c_fog">Fog of war</label><input id="c_fog" type="checkbox" style="width:22px;height:22px">
+<label for="c_lv">Custom level: <span id="ln">none</span></label><input id="c_lv" type="checkbox" style="width:22px;height:22px"><label for="lf">Level file</label><input id="lf" type="file" accept=".json">
+<details style="grid-column:1/3"><summary style="cursor:pointer">Accuracy tuning</summary><div id="tune"></div><button id="rst" class="g" type="button" style="font-size:12px;padding:6px 14px">Reset defaults</button></details></div>
+<button id="ob">DEPLOY</button><button id="or" class="g" style="display:none">▶ WATCH REPLAY</button><button id="om" class="g" style="display:none">MENU</button><button id="orz" class="g" style="display:none">RESUME</button></div></div>
+
+<script src="js/balance.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/level.js"></script>
+<script src="js/state.js"></script>
+<script src="js/input.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/flow.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/render.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/main.js"></script>
+</body></html>
