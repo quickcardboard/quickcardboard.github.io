@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SLAPDASH — 4P Pixel Prototype</title>
+  <style>
+    html,body { margin:0; min-height:100%; background:#11131a; color:#f4f4f0; font-family:system-ui,sans-serif; }
+    body { display:grid; place-items:center; padding:18px; box-sizing:border-box; }
+    #wrap { width:min(1100px,100%); }
+    #hud { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 10px; font-weight:700; letter-spacing:.04em; }
+    #status { font-size:13px; opacity:.72; font-weight:600; }
+    #game { width:100%; overflow:hidden; border:2px solid #303442; background:#1a1d26; image-rendering:pixelated; }
+    canvas { display:block; width:100%; height:auto; image-rendering:pixelated; }
+    .help { margin-top:10px; font-size:13px; line-height:1.5; opacity:.72; }
+    kbd { border:1px solid #454958; border-bottom-width:2px; border-radius:4px; padding:1px 5px; background:#20232c; }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div>SLAPDASH</div>
+    <div id="status">Connecting…</div>
+  </div>
+  <div id="game"></div>
+  <div class="help">
+    <b>Move:</b> <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd>
+    &nbsp; <b>Jump:</b> <kbd>W</kbd>/<kbd>Space</kbd>/<kbd>↑</kbd>
+    &nbsp; Stomp another player from above to score. Four players can share a room.
+  </div>
+</div>
+
+<script type="module">
+import Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.90.0/+esm";
+import { Client } from "https://cdn.jsdelivr.net/npm/@colyseus/sdk@0.18.4/+esm";
+
+const status = document.querySelector("#status");
+const client = new Client(window.location.origin);
+
+const W = 960, H = 540;
+let room;
+let me = null;
+const bodies = new Map();
+const colors = ["#ff5f56", "#4da3ff", "#ffd166", "#b57cff"];
+
+const config = {
+  type: Phaser.AUTO,
+  parent: "game",
+  width: W,
+  height: H,
+  pixelArt: true,
+  backgroundColor: "#151821",
+  physics: { default: "arcade", arcade: { gravity: { y: 0 }, debug: false } },
+  scene: { preload, create, update }
+};
+
+new Phaser.Game(config);
+
+function preload() {}
+
+function create() {
+  this.cameras.main.setBounds(0, 0, 4200, 540);
+  this.cameras.main.setRoundPixels(true);
+
+  // Pixel-art-style background.
+  const g = this.add.graphics();
+  g.fillStyle(0x151821);
+  g.fillRect(0, 0, 4200, 540);
+
+  // Distant skyline blocks.
+  g.fillStyle(0x1c202b);
+  for (let x = 0; x < 4200; x += 80) {
+    const h = 35 + ((x / 80) % 6) * 11;
+    g.fillRect(x, 540 - h - 80, 55, h);
+  }
+
+  // Platforms.
+  const platforms = [
+    [0, 500, 4200, 40],
+    [360, 380, 230, 18],
+    [760, 310, 220, 18],
+    [1120, 400, 260, 18],
+    [1510, 330, 250, 18],
+    [1880, 415, 260, 18],
+    [2250, 285, 230, 18],
+    [2580, 380, 290, 18],
+    [3030, 310, 240, 18],
+    [3380, 400, 300, 18],
+    [3780, 335, 240, 18]
+  ];
+  const pg = this.add.graphics();
+  pg.fillStyle(0xd7d7ce);
+  for (const [x,y,w,h] of platforms) pg.fillRect(x,y,w,h);
+  pg.fillStyle(0x777a84);
+  for (const [x,y,w,h] of platforms) pg.fillRect(x,y+h-5,w,5);
+
+  this.cameras.main.setZoom(1.25);
+
+  const keys = this.input.keyboard.addKeys({
+    left: "LEFT", right: "RIGHT", up: "UP", a: "A", d: "D", w: "W", space: "SPACE"
+  });
+
+  this.keys = keys;
+  this.lastInput = { left:false, right:false, jump:false };
+
+  connect(this);
+}
+
+function makeBody(scene, player, id) {
+  const container = scene.add.container(player.x + 13, player.y + 17);
+  const box = scene.add.rectangle(0, 0, 26, 34, Phaser.Display.Color.HexStringToColor(player.color).color);
+  box.setOrigin(.5);
+  const visor = scene.add.rectangle(0, -5, 16, 5, 0x11131a).setOrigin(.5);
+  const feet = scene.add.rectangle(0, 15, 22, 3, 0x0e1015).setOrigin(.5);
+  container.add([box, visor, feet]);
+  container.setDepth(10);
+  container.name = id;
+  scene.tweens.add({ targets: container, scaleX: 1.02, duration: 420, yoyo: true, repeat:-1 });
+  return container;
+}
+
+async function connect(scene) {
+  try {
+    room = await client.joinOrCreate("slapdash");
+    status.textContent = `Room ${room.roomId.slice(0,6)} • ${room.sessionId.slice(0,6)}`;
+    me = room.sessionId;
+
+    room.state.players.onAdd((player, id) => {
+      const body = makeBody(scene, player, id);
+      bodies.set(id, { body, player, targetX: player.x, targetY: player.y });
+      if (id === me) {
+        body.setDepth(20);
+        scene.cameras.main.startFollow(body, true, 0.10, 0.10);
+        scene.cameras.main.setDeadzone(280, 150);
+      }
+    });
+
+    room.state.players.onRemove((_player, id) => {
+      const item = bodies.get(id);
+      if (item) item.body.destroy();
+      bodies.delete(id);
+    });
+
+    room.state.players.onChange((player, id) => {
+      const item = bodies.get(id);
+      if (!item) return;
+      item.targetX = player.x;
+      item.targetY = player.y;
+      if (id === me) {
+        // Local player is still rendered from server state in this first prototype.
+        item.body.x = player.x + 13;
+        item.body.y = player.y + 17;
+      }
+      if (!player.alive) item.body.setVisible(false);
+      else item.body.setVisible(true);
+    });
+
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Could not connect — is the server running?";
+  }
+}
+
+function update(scene) {
+  if (!room) return;
+
+  const k = scene.keys;
+  const left = k.left.isDown || k.a.isDown;
+  const right = k.right.isDown || k.d.isDown;
+  const jump = Phaser.Input.Keyboard.JustDown(k.up) ||
+               Phaser.Input.Keyboard.JustDown(k.w) ||
+               Phaser.Input.Keyboard.JustDown(k.space);
+
+  const next = { left, right, jump };
+  if (JSON.stringify(next) !== JSON.stringify(scene.lastInput) || jump) {
+    room.send("input", next);
+    scene.lastInput = next;
+  }
+
+  for (const [id, item] of bodies) {
+    if (id === me) continue;
+    item.body.x += ((item.targetX + 13) - item.body.x) * 0.22;
+    item.body.y += ((item.targetY + 17) - item.body.y) * 0.22;
+  }
+
+  const mine = room.state.players.get(me);
+  if (mine) {
+    const scores = [];
+    room.state.players.forEach((p, id) => {
+      scores.push(`${id === me ? "YOU" : "P"+id.slice(-2)} ${p.score}`);
+    });
+    status.textContent = scores.join("   •   ");
+  }
+}
+</script>
+</body>
+</html>
